@@ -1,0 +1,11 @@
+install WSL
+
+install Docker
+
+add user to docker group
+
+PWD environment variable
+
+push auf git --> image wird gebaut
+
+need to set permissions of packages
