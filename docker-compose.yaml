@@ -147,7 +147,6 @@ services:
       # - ./configs/nomad.yaml:/app/nomad.yaml
       - ./.volumes/fs:/app/.volumes/fs
       - /var/run/docker.sock:/var/run/docker.sock
-    user: "1000:991"
     command: python -m nomad.cli admin run hub
     healthcheck:
       test:
@@ -201,13 +200,13 @@ services:
       - 80:80
 
   # jupyterlab image: (this is only used to pull the image, no service is run for this)
-  jupyterlab_image:
-    image: ghcr.io/fau-lap/nomad-distro-lap/jupyter:main
-    container_name: nomad_jupyter_image
-    pull_policy: always
-    entrypoint: ["true"]
-    deploy:
-      replicas: 0 # Ensures the service isn't started
+  # jupyterlab_image:
+  #   image: ghcr.io/fau-lap/nomad-distro-lap/jupyter:main
+  #   container_name: nomad_jupyter_image
+  #   pull_policy: always
+  #   entrypoint: ["true"]
+  #   deploy:
+  #     replicas: 0 # Ensures the service isn't started
 
 volumes:
   mongo:
