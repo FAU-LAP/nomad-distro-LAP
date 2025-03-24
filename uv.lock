@@ -3792,11 +3792,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nomad-aitoolkit"
-version = "0.1.1"
-source = { git = "https://github.com/FAIRmat-NFDI/nomad-aitoolkit.git?rev=b203f8eb28dc4b6771a39d5c5b7ad3d9d8583ac8#b203f8eb28dc4b6771a39d5c5b7ad3d9d8583ac8" }
-
-[[package]]
 name = "nomad-camels-plugin"
 version = "0.1.0"
 source = { git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.1#d477802f0def1d8cb21f3d9bfe5c921d35b7574c" }
@@ -3820,64 +3815,29 @@ dev = [
     { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, extra = ["dev", "infrastructure", "parsing"], marker = "python_full_version >= '3.10'" },
 ]
 plugins = [
-    { name = "nomad-aitoolkit" },
     { name = "nomad-camels-plugin" },
     { name = "nomad-lap-schema" },
-    { name = "nomad-normalizer-plugin-bandstructure" },
-    { name = "nomad-normalizer-plugin-dos" },
-    { name = "nomad-normalizer-plugin-simulation-workflow" },
-    { name = "nomad-normalizer-plugin-soap" },
-    { name = "nomad-normalizer-plugin-spectra" },
-    { name = "nomad-normalizer-plugin-system" },
-    { name = "nomad-parser-plugins-atomistic", version = "1.0.2", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-parser-plugins-atomistic", version = "1.0.5", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "nomad-parser-plugins-database", version = "1.0", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
     { name = "nomad-parser-plugins-database", version = "1.1.1", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-parser-plugins-electronic", version = "1.0", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-parser-plugins-electronic", version = "1.0.3", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "nomad-parser-plugins-workflow", version = "1.0", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
     { name = "nomad-parser-plugins-workflow", version = "1.1.4", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "nomad-schema-plugin-run" },
     { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.4", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
     { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.9", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-simulations" },
     { name = "pynxtools", extra = ["convert"] },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "nomad-aitoolkit", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-aitoolkit.git?rev=b203f8eb28dc4b6771a39d5c5b7ad3d9d8583ac8" },
     { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.1" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
     { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema" },
-    { name = "nomad-normalizer-plugin-bandstructure", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-dos", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-simulation-workflow", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-soap", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-spectra", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-system", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-parser-plugins-atomistic", marker = "extra == 'plugins'", specifier = ">=1.0" },
     { name = "nomad-parser-plugins-database", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-parser-plugins-electronic", marker = "extra == 'plugins'", specifier = ">=1.0" },
     { name = "nomad-parser-plugins-workflow", marker = "extra == 'plugins'", specifier = ">=1.0" },
     { name = "nomad-schema-plugin-run", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
     { name = "nomad-schema-plugin-simulation-workflow", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
-    { name = "nomad-simulations", marker = "extra == 'plugins'", specifier = "==0.0.1" },
     { name = "pynxtools", extras = ["convert"], marker = "extra == 'plugins'", specifier = "==0.5.0" },
-]
-
-[[package]]
-name = "nomad-dos-fingerprints"
-version = "1.0.2"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/47/5d/5f6c2d7ef225a92f326103d30a6333a4bc71030f344981d15b6e31b0ec5a/nomad_dos_fingerprints-1.0.2.tar.gz", hash = "sha256:cc70624ee7f680d471e00fa31fccbc1c0bfec6410fa7f980dbaeaff2603249fe", size = 11386 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/5d/f0604fa8e642562118ad330088959623ba84cb56c965a23b34c8e2ce225a/nomad_dos_fingerprints-1.0.2-py3-none-any.whl", hash = "sha256:cc01ed88d35f751ef13c89e75faeea16fef16ab8363b3a6fcb4f810afacb6338", size = 10593 },
 ]
 
 [[package]]
@@ -4148,137 +4108,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nomad-normalizer-plugin-bandstructure"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/1a/a8/1c757fca0cfe6d49544eed490d01d0790771f0c65a9c8d03b0eea35d40f8/nomad_normalizer_plugin_bandstructure-1.0.tar.gz", hash = "sha256:4cd667a221e81249610b56eba58e8ba098943335fd8bbae8f5e5e393866cec0e", size = 12484 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/7c/73953a6ff4ec87d37d528c0d3fd4670108ed501c561910eb387d5209308a/nomad_normalizer_plugin_bandstructure-1.0-py3-none-any.whl", hash = "sha256:54fc876352a2367d7c02cd55231855a98b4be057e1b5ba405ef9083341648f9e", size = 11722 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-dos"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-dos-fingerprints" },
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e4/ce/582250ec552f0ceeff88f06b34fb5ed22861de3b12ef381214ed8dbcf593/nomad_normalizer_plugin_dos-1.0.tar.gz", hash = "sha256:62b63c8fdbb964a1afc92f24f6b52e8ebf7c885966243eb54c587577b9233a4e", size = 14832 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/01/5b7835d044c30dc71aec82e2982529fda9de54f6705079ecc14277eb05c2/nomad_normalizer_plugin_dos-1.0-py3-none-any.whl", hash = "sha256:cd37af4a625e7e66c6e0e9ff8c28600ce7e497b3457919fc58ddc49b5bffb7a2", size = 12527 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-simulation-workflow"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.4", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.9", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/39/47/c3896d87e04285fd4482e607043bedce4bfe051ea380fec156aa36b8fb1c/nomad_normalizer_plugin_simulation_workflow-1.0.tar.gz", hash = "sha256:7472e63c9abbc64b0281c68c9122e561390d14fc070c859328fd95b9fdb9fdcf", size = 7442 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/9a/edf7ca75a9b40f81902f3d9358c8174dbd5125b2317b8899920c25b182c7/nomad_normalizer_plugin_simulation_workflow-1.0-py3-none-any.whl", hash = "sha256:a210812c7f091051c053ea9eaf03b691cfc4f865c4a3850a794fd2f48ff2256e", size = 8153 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-soap"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/3e/8f314eb49a2817a63bccaa60f56ed52cf9d53c61d67673e90be1fdda0f9f/nomad_normalizer_plugin_soap-1.0.tar.gz", hash = "sha256:8f426773ed96d63dd2b5f0d4e15971266de4175859ee27400e8cd14d4fb724fb", size = 8059 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/64/f2e3d16193e39b303d47c029d594f7ee20fafc2571157406641f47d715a7/nomad_normalizer_plugin_soap-1.0-py3-none-any.whl", hash = "sha256:2e861da6b2c425725f29ef1d681f81ba3ac6d1187009b64d870c8f39d94167c7", size = 8796 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-spectra"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/90/66/e4aeff3a57e4ed6901cfd84a46a1fb9c94f19ec8fbb581a08f2dc3c79777/nomad_normalizer_plugin_spectra-1.0.tar.gz", hash = "sha256:78bd7927f18617bfd5f9254e1f91b1c410463ffc7171797fdcba189ea0337e5c", size = 7216 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/e1/fc0b20b4bcd1c6a134bce31b2249bf28bfb5e3e1549416aeddf1c6ffbdfc/nomad_normalizer_plugin_spectra-1.0-py3-none-any.whl", hash = "sha256:1a10a7bbff4d059d67fd04acd1aafe5e00ac2e8b502b63be7631bd8fc8b6a2db", size = 8121 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-system"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0b/b0/f24b8cd990d29bad8bb32ffd04c58b8c01a9a7129a602ab8aac8f3809018/nomad_normalizer_plugin_system-1.0.tar.gz", hash = "sha256:543c824f542cc5bdb8f6d009f5f226db0118803d980fdbb534bf05c148848cc8", size = 15238 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/b0/69350a00841a574d2e1f169fb8c4fb792cfbcfc2f45df2c333b50be9b7c7/nomad_normalizer_plugin_system-1.0-py3-none-any.whl", hash = "sha256:00c3c85445e0936a55496684cc5c713b6afb04f39dc1da958e6e865c413b8161", size = 12581 },
-]
-
-[[package]]
-name = "nomad-parser-plugins-atomistic"
-version = "1.0.2"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-resolution-markers = [
-    "python_full_version < '3.10' and sys_platform == 'win32'",
-    "python_full_version < '3.10' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "lxml", marker = "python_full_version < '3.10'" },
-    { name = "mdanalysis", version = "2.7.0", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-parser-plugins-simulation", marker = "python_full_version < '3.10'" },
-    { name = "nomad-schema-plugin-run", marker = "python_full_version < '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.4", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "panedr", marker = "python_full_version < '3.10'" },
-    { name = "pydantic", version = "1.10.18", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "scipy", marker = "python_full_version < '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/8d/92695d3e7f7d1fe7c10562664571471cd3d1ed8891b0df926f8e3ba91eee/nomad_parser_plugins_atomistic-1.0.2.tar.gz", hash = "sha256:e0c31deb2d784438f7f3d84419a36a74f2419eba54d344d12897db207281a371", size = 93835489 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/54/550ab53f6ef25c3d30c059cb214fa312508bd69dd24844678cdb4f61c16c/nomad_parser_plugins_atomistic-1.0.2-py3-none-any.whl", hash = "sha256:3feec5d43973f8307efc03901fc37a04c6a15e2f5b80339e31f7957a922efc22", size = 187045 },
-]
-
-[[package]]
-name = "nomad-parser-plugins-atomistic"
-version = "1.0.5"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-resolution-markers = [
-    "python_full_version == '3.10.*' and sys_platform == 'win32'",
-    "python_full_version == '3.10.*' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*'",
-    "python_full_version >= '3.12'",
-]
-dependencies = [
-    { name = "lxml", marker = "python_full_version >= '3.10'" },
-    { name = "mdanalysis", version = "2.9.0", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-parser-plugins-simulation", marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-run", marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.9", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "panedr", marker = "python_full_version >= '3.10'" },
-    { name = "pydantic", version = "2.10.6", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "scipy", marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/97/bd/57e89ebfe828d3c9b89d7fcd39846ce3eb3f911c5a1f456d4b0ea8ede9f3/nomad_parser_plugins_atomistic-1.0.5.tar.gz", hash = "sha256:8a026baa958193754320a1eb3243a5b5bb696b543358567c9937a0ca50cacbd7", size = 94053522 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e7/1e/b0bdd946e86ced656804b10fb1c461a7f35297ce0c4eca2841af8fbf0175/nomad_parser_plugins_atomistic-1.0.5-py3-none-any.whl", hash = "sha256:8459ebe4d285e61ab521fab8509e357a2efcbfa14ffb73611eeb69fcfd7925f4", size = 189395 },
-]
-
-[[package]]
 name = "nomad-parser-plugins-database"
 version = "1.0"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
@@ -4316,70 +4145,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b2/a5/214a33baa829e23a591c551738ba6867c10f379e07fcb72998315e26d958/nomad_parser_plugins_database-1.1.1.tar.gz", hash = "sha256:99187e4a68ca79f8545320cd574b3f9d06be8d20bd323af0eef9f5d9e88b0b20", size = 3333622 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4c/b8/7c29ee9b76c82612acdfba85d6b949ecb0d72dbf519cd666394894ba7bad/nomad_parser_plugins_database-1.1.1-py3-none-any.whl", hash = "sha256:fbcbb04c91399b126463caa222505b39ee734466454d93a7c81a521b94f43a7c", size = 18191 },
-]
-
-[[package]]
-name = "nomad-parser-plugins-electronic"
-version = "1.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-resolution-markers = [
-    "python_full_version < '3.10' and sys_platform == 'win32'",
-    "python_full_version < '3.10' and sys_platform != 'win32'",
-]
-dependencies = [
-    { name = "h5py", marker = "python_full_version < '3.10'" },
-    { name = "lxml", marker = "python_full_version < '3.10'" },
-    { name = "netcdf4", marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-parser-plugins-simulation", marker = "python_full_version < '3.10'" },
-    { name = "nomad-schema-plugin-run", marker = "python_full_version < '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.4", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pydantic", version = "1.10.18", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "pyyaml", marker = "python_full_version < '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/a2/11/36d2cd191ba05d54ee6ed1323c6f15fe950dba8b3f2cb8cbc343a9264409/nomad_parser_plugins_electronic-1.0.tar.gz", hash = "sha256:8273593e3b2da5d218c064f42fd1b3322c72888f00bdeb0ea4dd0d2539c469e8", size = 876415 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/6c/f52fa20394fe889c0245a3b9ecbf3e1e36bf0218985570df55ccb947b6b2/nomad_parser_plugins_electronic-1.0-py3-none-any.whl", hash = "sha256:cb5b9681cf821b665482309cfac45339ddf2230091bd379ac642f861713ca182", size = 958698 },
-]
-
-[[package]]
-name = "nomad-parser-plugins-electronic"
-version = "1.0.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-resolution-markers = [
-    "python_full_version == '3.10.*' and sys_platform == 'win32'",
-    "python_full_version == '3.10.*' and sys_platform != 'win32'",
-    "python_full_version == '3.11.*'",
-    "python_full_version >= '3.12'",
-]
-dependencies = [
-    { name = "h5py", marker = "python_full_version >= '3.10'" },
-    { name = "lxml", marker = "python_full_version >= '3.10'" },
-    { name = "netcdf4", marker = "python_full_version >= '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-parser-plugins-simulation", marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-run", marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-simulation-workflow", version = "1.0.9", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "pydantic", version = "2.10.6", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "pyyaml", marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/40/b9/4c2980135256e74091680ae98f4e8686701789f65b8820b3b6b8f58f2446/nomad_parser_plugins_electronic-1.0.3.tar.gz", hash = "sha256:168314a51a42a990c16eacb0d6771fafd84f965f2fd4501138b01d4f4cbef0d3", size = 82889624 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/93/be/bf36e897de87993cacd3bd5971dfa0714c6af89a48e3f40b1cc6960f21b1/nomad_parser_plugins_electronic-1.0.3-py3-none-any.whl", hash = "sha256:8a065b2016c10f508656a55e10d1a4b099f38060e54a55f0c86e5efc977f3aa6", size = 1128823 },
-]
-
-[[package]]
-name = "nomad-parser-plugins-simulation"
-version = "1.0.2"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "nomad-schema-plugin-run" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/07/90/478c4140d9ae9710d03e9bc297af111b56b4fb5ce175fc2d38bfdbd84cc9/nomad_parser_plugins_simulation-1.0.2.tar.gz", hash = "sha256:08d0ca7ee97819de2a80fbdca742a926a40f464dc17d57cafb2d51ab52ad5dd3", size = 11528 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/dd/8b1cf96de35ef5adc046bb319efc2436a5f5687cd45921a2b68769d2067a/nomad_parser_plugins_simulation-1.0.2-py3-none-any.whl", hash = "sha256:352d33a6c208e17e4a9058831af70bd278def820530219a55cfb4d863e0f5288", size = 16870 },
 ]
 
 [[package]]
@@ -4485,20 +4250,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/06/e8/ec357f148972c4da18084401a509a882d04b480ad33cb0c5362c835cd835/nomad_schema_plugin_simulation_workflow-1.0.9.tar.gz", hash = "sha256:241d8e11c642ef0c5f14061722e33babf33901995a7ebe91c0bdf6dfe42e85d0", size = 8866796 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e8/b4/8c4df1cde169fd38ac1917032fca8d99574a9c2649b977b5aaf992e27748/nomad_schema_plugin_simulation_workflow-1.0.9-py3-none-any.whl", hash = "sha256:d2110a81759948516faa8827610d7fed4509935be29fae3a4f001195ec0fcc1c", size = 55355 },
-]
-
-[[package]]
-name = "nomad-simulations"
-version = "0.0.1"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "matid" },
-    { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/54/95/d61978fa03a9e2f4bdbe1c3e9290965e2dfd05a145235eee837a2decbba4/nomad_simulations-0.0.1.tar.gz", hash = "sha256:83131b7697722c20c712a1ad32e5c0f9b57ae8cba73aa50bac6d55d3a2562164", size = 577188 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/86/ee/6c01e4f2552596d0546b1034b33c6bcc0176e2896dafb39147e9737e2b24/nomad_simulations-0.0.1-py3-none-any.whl", hash = "sha256:f8dcfbe78921d75a0d6c24ffaf214f8a6f0fb0ec0ba37a1206f267467462076a", size = 84261 },
 ]
 
 [[package]]
