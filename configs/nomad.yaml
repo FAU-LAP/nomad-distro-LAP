@@ -34,7 +34,14 @@ plugins:
     exclude:
       - nomad_porous_materials.normalizers:porositynormalizer
       - example_uploads/1_basic_examples/1_theory
+      - example_uploads/1_basic_examples/2_eln
+      - example_uploads/1_basic_examples/3_tables
+      - example_uploads/2_tutorials/1_rdm_tutorial
+      - example_uploads/2_tutorials/2_cow_tutorial
+      - apps/2_theory/1_calculations
       - apps/2_theory/2_materials
+      - apps/3_experiment/2_eels
+    # entry point options copied from default settings, used mainly to turn off
     options:
       example_uploads/1_basic_examples/1_theory:
         entry_point_type: example_upload
