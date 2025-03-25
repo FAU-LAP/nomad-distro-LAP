@@ -2484,7 +2484,7 @@ requires-dist = [
     { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.1" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
-    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=f5eed3ad33814243a8456a7dd00cdbe0dcf24454" },
+    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=e736ae30e01d24557b6d489813479b06f4b0389a" },
 ]
 
 [[package]]
@@ -2747,7 +2747,7 @@ parsing = [
 [[package]]
 name = "nomad-lap-schema"
 version = "0.1.0"
-source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=f5eed3ad33814243a8456a7dd00cdbe0dcf24454#f5eed3ad33814243a8456a7dd00cdbe0dcf24454" }
+source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=e736ae30e01d24557b6d489813479b06f4b0389a#e736ae30e01d24557b6d489813479b06f4b0389a" }
 dependencies = [
     { name = "nomad-lab", version = "1.3.13", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version < '3.10'" },
     { name = "nomad-lab", version = "1.3.15", source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }, marker = "python_full_version >= '3.10'" },
