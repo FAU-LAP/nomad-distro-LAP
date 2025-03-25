@@ -27,3 +27,12 @@ mongo:
 elastic:
   entries_index: nomad_oasis_entries_v1
   materials_index: nomad_oasis_materials_v1
+
+
+plugins:
+  include: ['schemas/nomad-lap-schema', 'plugins/nomad-camels-plugin']
+  options:
+    schemas/nomad-lap-schema:
+      python_package: nomad-lap-schema
+    plugins/nomad-camels-plugin:
+      python_package: nomad-camels-plugin
