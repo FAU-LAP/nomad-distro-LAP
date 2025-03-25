@@ -28,7 +28,7 @@ repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 [project.optional-dependencies]
 plugins = [
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.1",
-  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@f5eed3ad33814243a8456a7dd00cdbe0dcf24454"
+  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@e736ae30e01d24557b6d489813479b06f4b0389a"
 ]
 jupyter = []
 dev = ["nomad-lab[parsing, infrastructure, dev]>=1.3.4"]
