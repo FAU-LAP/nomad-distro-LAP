@@ -30,9 +30,9 @@ elastic:
 
 
 plugins:
-  include: ['schemas/nomad-lap-schema', 'plugins/nomad-camels-plugin']
+  include: ['schemas/nomad_lap_schema', 'plugins/nomad_camels_plugin']
   options:
-    schemas/nomad-lap-schema:
-      python_package: nomad-lap-schema
-    plugins/nomad-camels-plugin:
-      python_package: nomad-camels-plugin
+    schemas/nomad_lap_schema:
+      python_package: nomad_lap_schema
+    plugins/nomad_camels_plugin:
+      python_package: nomad_camels_plugin
