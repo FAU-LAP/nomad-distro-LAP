@@ -35,11 +35,15 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
 
 ### For a new Oasis
 
-1. Make sure you have [docker](https://docs.docker.com/engine/install/) installed.
+1. For testing on windows, [install WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
+
+2. Make sure you have [docker](https://docs.docker.com/engine/install/) installed.
    Docker nowadays comes with `docker compose` built in. Prior, you needed to
    install the stand-alone [docker-compose](https://docs.docker.com/compose/install/).
+  
+3. Again, testing on Windows: Add your user to the docker-users group (see the [docker install guide](https://docs.docker.com/desktop/setup/install/windows-install/#install-interactively))
 
-2. Clone the repository or download the repository as a zip file.
+4. Clone the repository or download the repository as a zip file.
 
     ```sh
     git clone https://github.com/FAU-LAP/nomad-distro-LAP.git
@@ -54,13 +58,13 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     cd nomad-distro-LAP
     ```
 
-3. _On Linux only,_ recursively change the owner of the `.volumes` directory to the nomad user (1000)
+5. _On Linux only,_ recursively change the owner of the `.volumes` directory to the nomad user (1000)
 
     ```sh
     sudo chown -R 1000 .volumes
     ```
 
-4. Pull the images specified in the `docker-compose.yaml`
+6. Pull the images specified in the `docker-compose.yaml`
 
     Note that the image needs to be public or you need to provide a PAT (see "Important" note above).
 
@@ -68,19 +72,19 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     docker compose pull
     ```
 
-5. And run it with docker compose in detached (--detach or -d) mode
+7. And run it with docker compose in detached (--detach or -d) mode
 
     ```sh
     docker compose up -d
     ```
 
-6. Optionally you can now test that NOMAD is running with
+8. Optionally you can now test that NOMAD is running with
 
     ```
     curl localhost/nomad-oasis/alive
     ```
 
-7. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
+9. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
 
 #### Updating the image
 1. Whenever you update your image you need to shut down NOMAD using
@@ -96,6 +100,8 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     ```sh
     docker image prune -a
     ```
+
+*OR* You can run the `clean_up_pull_start_new.ps1` file of this repository in your PowerShell, which shuts down the running NOMAD, pulls the new image and starts it, for convenience.
 
 #### NOMAD Remote Tools Hub (NORTH)
 
