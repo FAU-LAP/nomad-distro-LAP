@@ -27,3 +27,621 @@ mongo:
 elastic:
   entries_index: nomad_oasis_entries_v1
   materials_index: nomad_oasis_materials_v1
+
+
+plugins:
+  entry_points:
+    exclude:
+      - nomad_porous_materials.normalizers:porositynormalizer
+      - example_uploads/1_basic_examples/1_theory
+      - example_uploads/1_basic_examples/2_eln
+      - example_uploads/1_basic_examples/3_tables
+      - example_uploads/2_tutorials/1_rdm_tutorial
+      - example_uploads/2_tutorials/2_cow_tutorial
+      - apps/2_theory/1_calculations
+      - apps/2_theory/2_materials
+      - apps/3_experiment/2_eels
+    # entry point options copied from default settings, used mainly to turn off
+    options:
+      example_uploads/1_basic_examples/1_theory:
+        entry_point_type: example_upload
+        from_examples_directory: true
+        resources: theory/*
+        title: Electronic structure code input and output files
+        category: Basic examples
+        description: |
+          This upload demonstrate the basic use of NOMAD's *parsers*. For many *electronic
+          structure codes* (VASP, etc.), NOMAD provides parsers. You simply upload
+          the *input and output files* of your simulations and NOMAD parsers are extracting
+          all necessary metadata to produce a **FAIR** dataset.
+      example_uploads/1_basic_examples/2_eln:
+        entry_point_type: example_upload
+        from_examples_directory: true
+        resources: eln/*
+        title: Electronic Lab Notebook
+        category: Basic examples
+        description: |
+          This example contains a custom NOMAD *schema* to create an **Electronic
+          Lab Notebook (ELN)** and a few example *data* entries that use this schema.
+          The schema demonstrates the basic concepts behind a NOMAD ELN and can be a good
+          **starting point** to create you own schemas that model **FAIR data** acquired in your lab.
+      example_uploads/1_basic_examples/3_tables:
+        entry_point_type: example_upload
+        from_examples_directory: true
+        resources: tabular/*
+        title: Tabular Data
+        category: Basic examples
+        description: |
+          This upload demonstrates the use of tabular data. In this example we use an *xlsx*
+          file in combination with a custom schema. The schema describes what the columns
+          in the excel file mean and NOMAD can parse everything accordingly to
+          produce a **FAIR** dataset.
+      example_uploads/2_tutorials/1_rdm_tutorial:
+        entry_point_type: example_upload
+        from_examples_directory: true
+        resources: rdm_tutorial/*
+        title: Tailored Research Data Management (RDM) with NOMAD
+        category: Tutorials
+        description: |
+          This notebook will teach you how you can build tailored research data
+          management (RDM) solutions using NOMAD. It uses existing thermally
+          activated delayed fluorescent (TADF) molecule data to teach you how we
+          can use the NOMAD to turn research data into datasets that are FAIR:
+          Findable, Accessible, Interoperable and Reusable. The end-result can be
+          distributed as a NOMAD plugin: a self-contained Python package that can be
+          installed on a NOMAD Oasis.
+      example_uploads/2_tutorials/2_cow_tutorial:
+        entry_point_type: example_upload
+        from_examples_directory: true
+        resources: cow_tutorial/*
+        title: NOMAD as a Data Management Framework Tutorial
+        category: Tutorials
+        description: |
+          This upload provides a notebook as a tutorial that demonstrates how to use NOMAD
+          for managing custom data and file types. Based on a simple *Countries of the World*
+          dataset, it shows how to model the data in a schema, do parsing and normalization,
+          process data, access existing data with NOMAD's API for analysis, and how to
+          add visualization to your data.
+      apps/1_all/1_entries:
+        entry_point_type: app
+        app:
+          label: Entries
+          path: entries
+          category: All
+          description: Search entries across all domains
+          readme: 'This page allows you to search **entries** within NOMAD.
+            Entries represent any individual data items that have
+            been uploaded to NOMAD, no matter whether they come from
+            theoretical calculations, experiments, lab notebooks or
+            any other source of data. This allows you to perform
+            cross-domain queries, but if you are interested in a
+            specific subfield, you should see if a specific
+            application exists for it in the explore menu to get
+            more details.'
+          filters:
+            exclude:
+            - mainfile
+            - entry_name
+            - combine
+          search_syntaxes:
+            exclude:
+            - free_text
+          columns:
+           - search_quantity: entry_name
+             title: Name
+             selected: true
+           - search_quantity: results.material.chemical_formula_hill
+             title: Formula
+             selected: true
+           - search_quantity: entry_type
+             selected: true
+           - search_quantity: upload_create_time
+             title: Upload time
+             selected: true
+           - search_quantity: authors
+             selected: true
+           - search_quantity: upload_name
+           - search_quantity: upload_id
+           - search_quantity: results.method.method_name
+           - search_quantity: results.method.simulation.program_name
+           - search_quantity: results.method.simulation.dft.xc_functional_type
+           - search_quantity: results.method.simulation.precision.apw_cutoff
+           - search_quantity: results.method.simulation.precision.basis_set
+           - search_quantity: results.method.simulation.precision.k_line_density
+           - search_quantity: results.method.simulation.precision.native_tier
+           - search_quantity: results.method.simulation.precision.planewave_cutoff
+           - search_quantity: results.material.structural_type
+           - search_quantity: results.material.symmetry.crystal_system
+           - search_quantity: results.material.symmetry.space_group_symbol
+           - search_quantity: results.material.symmetry.space_group_number
+           - search_quantity: results.eln.lab_ids
+           - search_quantity: results.eln.sections
+           - search_quantity: results.eln.methods
+           - search_quantity: results.eln.tags
+           - search_quantity: results.eln.instruments
+           - search_quantity: mainfile
+           - search_quantity: comment
+           - search_quantity: references
+           - search_quantity: datasets
+           - search_quantity: published
+             title: Access
+          filter_menus:
+            options:
+              material:
+                label: Material
+              elements:
+                label: Elements / Formula
+                level: 1
+                size: xl
+              structure:
+                label: Structure / Symmetry
+                level: 1
+              method:
+                label: Method
+              precision:
+                label: Precision
+                level: 1
+              dft:
+                label: DFT
+                level: 1
+              tb:
+                label: TB
+                level: 1
+              gw:
+                label: GW
+                level: 1
+              bse:
+                label: BSE
+                level: 1
+              dmft:
+                label: DMFT
+                level: 1
+              eels:
+                label: EELS
+                level: 1
+              workflow:
+                label: Workflow
+              molecular_dynamics:
+                label: Molecular dynamics
+                level: 1
+              geometry_optimization:
+                label: Geometry Optimization
+                level: 1
+              properties:
+                label: Properties
+              electronic:
+                label: Electronic
+                level: 1
+              vibrational:
+                label: Vibrational
+                level: 1
+              mechanical:
+                label: Mechanical
+                level: 1
+              usecases:
+                label: Use Cases
+              solarcell:
+                label: Solar Cells
+                level: 1
+              heterogeneouscatalyst:
+                label: Heterogeneous Catalysis
+                level: 1
+              author:
+                label: Author / Origin / Dataset
+                size: m
+              metadata:
+                label: Visibility / IDs / Schema
+              optimade:
+                label: Optimade
+                size: m
+      apps/2_theory/1_calculations:
+        entry_point_type: app
+        app:
+          label: Calculations
+          path: calculations
+          category: Theory
+          description: Search calculations
+          readme: 'This page allows you to search **calculations** within
+            NOMAD. Calculations typically come from a specific
+            simulation software that uses an approximate model to
+            investigate and report different physical properties.'
+          filters:
+            exclude:
+            - mainfile
+            - entry_name
+            - combine
+          filters_locked:
+            quantities: results.method.simulation.program_name
+          search_syntaxes:
+            exclude:
+            - free_text
+          columns:
+           - search_quantity: results.material.chemical_formula_hill
+             title: Formula
+             selected: true
+           - search_quantity: results.method.simulation.program_name
+             selected: true
+           - search_quantity: results.method.method_name
+             selected: true
+           - search_quantity: results.method.simulation.dft.xc_functional_type
+             selected: true
+           - search_quantity: upload_create_time
+             title: Upload time
+             selected: true
+           - search_quantity: authors
+             selected: true
+           - search_quantity: results.method.simulation.precision.apw_cutoff
+           - search_quantity: results.method.simulation.precision.basis_set
+           - search_quantity: results.method.simulation.precision.k_line_density
+           - search_quantity: results.method.simulation.precision.native_tier
+           - search_quantity: results.method.simulation.precision.planewave_cutoff
+           - search_quantity: results.material.structural_type
+           - search_quantity: results.material.symmetry.crystal_system
+           - search_quantity: results.material.symmetry.space_group_symbol
+           - search_quantity: results.material.symmetry.space_group_number
+           - search_quantity: entry_name
+             title: Name
+           - search_quantity: mainfile
+           - search_quantity: comment
+           - search_quantity: references
+           - search_quantity: datasets
+           - search_quantity: published
+             title: Access
+          filter_menus:
+            options:
+              material:
+                label: Material
+              elements:
+                label: Elements / Formula
+                level: 1
+                size: xl
+              structure:
+                label: Structure / Symmetry
+                level: 1
+              method:
+                label: Method
+              precision:
+                label: Precision
+                level: 1
+              dft:
+                label: DFT
+                level: 1
+              tb:
+                label: TB
+                level: 1
+              gw:
+                label: GW
+                level: 1
+              bse:
+                label: BSE
+                level: 1
+              dmft:
+                label: DMFT
+                level: 1
+              workflow:
+                label: Workflow
+              molecular_dynamics:
+                label: Molecular dynamics
+                level: 1
+              geometry_optimization:
+                label: Geometry Optimization
+                level: 1
+              properties:
+                label: Properties
+              electronic:
+                label: Electronic
+                level: 1
+              vibrational:
+                label: Vibrational
+                level: 1
+              mechanical:
+                label: Mechanical
+                level: 1
+              author:
+                label: Author / Origin / Dataset
+                size: m
+              metadata:
+                label: Visibility / IDs / Schema
+              optimade:
+                label: Optimade
+                size: m
+          dashboard:
+            widgets:
+            - layout:
+                lg: {h: 11, minH: 3, minW: 3, w: 14, x: 0, y: 0}
+                md: {h: 8, minH: 3, minW: 3, w: 12, x: 0, y: 0}
+                sm: {h: 8, minH: 3, minW: 3, w: 12, x: 0, y: 0}
+                xl: {h: 11, minH: 3, minW: 3, w: 14, x: 0, y: 0}
+                xxl: {h: 9, minH: 3, minW: 3, w: 13, x: 0, y: 0}
+              quantity: results.material.elements
+              scale: linear
+              type: periodictable
+            - layout:
+                lg: {h: 5, minH: 3, minW: 3, w: 5, x: 19, y: 6}
+                md: {h: 6, minH: 3, minW: 3, w: 6, x: 12, y: 8}
+                sm: {h: 5, minH: 3, minW: 3, w: 6, x: 6, y: 13}
+                xl: {h: 6, minH: 3, minW: 3, w: 6, x: 24, y: 5}
+                xxl: {h: 9, minH: 3, minW: 3, w: 6, x: 30, y: 0}
+              quantity: results.material.symmetry.space_group_symbol
+              scale: linear
+              show_input: true
+              type: terms
+            - layout:
+                lg: {h: 6, minH: 3, minW: 3, w: 5, x: 19, y: 0}
+                md: {h: 6, minH: 3, minW: 3, w: 6, x: 0, y: 8}
+                sm: {h: 5, minH: 3, minW: 3, w: 6, x: 6, y: 8}
+                xl: {h: 11, minH: 3, minW: 3, w: 5, x: 19, y: 0}
+                xxl: {h: 9, minH: 3, minW: 3, w: 6, x: 19, y: 0}
+              quantity: results.material.structural_type
+              scale: log
+              show_input: false
+              type: terms
+            - layout:
+                lg: {h: 6, minH: 3, minW: 3, w: 5, x: 14, y: 0}
+                md: {h: 8, minH: 3, minW: 3, w: 6, x: 12, y: 0}
+                sm: {h: 5, minH: 3, minW: 3, w: 6, x: 0, y: 8}
+                xl: {h: 11, minH: 3, minW: 3, w: 5, x: 14, y: 0}
+                xxl: {h: 9, minH: 3, minW: 3, w: 6, x: 13, y: 0}
+              quantity: results.method.simulation.program_name
+              scale: log
+              show_input: true
+              type: terms
+            - layout:
+                lg: {h: 5, minH: 3, minW: 3, w: 5, x: 14, y: 6}
+                md: {h: 6, minH: 3, minW: 3, w: 6, x: 6, y: 8}
+                sm: {h: 5, minH: 3, minW: 3, w: 6, x: 0, y: 13}
+                xl: {h: 5, minH: 3, minW: 3, w: 6, x: 24, y: 0}
+                xxl: {h: 9, minH: 3, minW: 3, w: 5, x: 25, y: 0}
+              quantity: results.material.symmetry.crystal_system
+              scale: linear
+              show_input: false
+              type: terms
+      apps/2_theory/2_materials:
+        entry_point_type: app
+        app:
+          label: Materials
+          path: materials
+          resource: materials
+          category: Theory
+          description: Search materials that are identified from calculations
+          readme: 'This page allows you to search **materials** within
+            NOMAD. NOMAD can often automatically detect the material
+            from individual calculations that contain the full
+            atomistic structure and can then group the data by using
+            these detected materials. This allows you to search
+            individual materials which have properties that are
+            aggregated from several entries. Following the link for
+            a specific material will take you to the corresponding
+            [NOMAD Encyclopedia](https://nomad-lab.eu/prod/rae/encyclopedia/#/search)
+            page for that material. NOMAD Encyclopedia is a service
+            that is specifically oriented towards materials property
+            exploration.
+
+            Notice that by default the properties that you search
+            can be combined from several different entries. If
+            instead you wish to search for a material with an
+            individual entry fullfilling your search criteria,
+            uncheck the **combine results from several
+            entries**-checkbox.'
+          pagination:
+            order: asc
+            order_by: chemical_formula_hill
+          search_syntaxes:
+            exclude:
+            - free_text
+          filters:
+            exclude:
+            - mainfile
+            - entry_name
+          rows:
+            details:
+              enabled: false
+            selection:
+              enabled: false
+          columns:
+           - search_quantity: chemical_formula_hill
+             title: Formula
+             selected: true
+           - search_quantity: structural_type
+             selected: true
+           - search_quantity: symmetry.structure_name
+             selected: true
+           - search_quantity: symmetry.space_group_number
+             selected: true
+           - search_quantity: symmetry.crystal_system
+             selected: true
+           - search_quantity: symmetry.space_group_symbol
+           - search_quantity: material_id
+          filter_menus:
+            options:
+              material:
+                label: Material
+              elements:
+                label: Elements / Formula
+                level: 1
+                size: xl
+              structure:
+                label: Structure / Symmetry
+                level: 1
+              method:
+                label: Method
+              dft:
+                label: DFT
+                level: 1
+              tb:
+                label: TB
+                level: 1
+              gw:
+                label: GW
+                level: 1
+              bse:
+                label: BSE
+                level: 1
+              dmft:
+                label: DMFT
+                level: 1
+              workflow:
+                label: Workflow
+              molecular_dynamics:
+                label: Molecular dynamics
+                level: 1
+              geometry_optimization:
+                label: Geometry Optimization
+                level: 1
+              properties:
+                label: Properties
+              electronic:
+                label: Electronic
+                level: 1
+              vibrational:
+                label: Vibrational
+                level: 1
+              mechanical:
+                label: Mechanical
+                level: 1
+              author:
+                label: Author / Origin / Dataset
+                size: m
+              metadata:
+                label: Visibility / IDs / Schema
+              optimade:
+                label: Optimade
+                size: m
+              combine:
+                actions:
+                  options:
+                    combine:
+                      label: Combine results from several entries
+                      quantity: combine
+                      type: checkbox
+      apps/3_experiment/1_eln:
+        entry_point_type: app
+        app:
+          label: ELN
+          path: eln
+          category: Experiment
+          description: Search electronic lab notebooks
+          readme: 'This page allows you to specifically seach **electronic
+            lab notebooks (ELNs)** within NOMAD. It is very similar
+            to the entries search, but with a reduced filter set and
+            specialized arrangement of default columns.'
+          filters:
+            exclude:
+            - mainfile
+            - entry_name
+            - combine
+          filters_locked:
+            quantities: data
+          columns:
+           - search_quantity: entry_name
+             title: Name
+             selected: true
+           - search_quantity: entry_type
+             selected: true
+           - search_quantity: upload_create_time
+             title: Upload time
+             selected: true
+           - search_quantity: authors
+             selected: true
+           - search_quantity: results.material.chemical_formula_hill
+             title: Formula
+           - search_quantity: results.method.method_name
+           - search_quantity: results.eln.lab_ids
+           - search_quantity: results.eln.sections
+           - search_quantity: results.eln.methods
+           - search_quantity: results.eln.tags
+           - search_quantity: results.eln.instruments
+           - search_quantity: mainfile
+           - search_quantity: comment
+           - search_quantity: references
+           - search_quantity: datasets
+           - search_quantity: published
+             title: Access
+          filter_menus:
+            options:
+              material:
+                label: Material
+              elements:
+                label: Elements / Formula
+                level: 1
+                size: xl
+              eln:
+                label: Electronic Lab Notebook
+              custom_quantities:
+                label: User Defined Quantities
+                size: l
+              author:
+                label: Author / Origin / Dataset
+                size: m
+              metadata:
+                label: Visibility / IDs / Schema
+              optimade:
+                label: Optimade
+                size: m
+      apps/3_experiment/2_eels:
+        entry_point_type: app
+        app:
+          label: EELS
+          path: eels
+          category: Experiment
+          description: Search electron energy loss spectroscopy experiments
+          readme: 'This page allows you to spefically search **Electron
+            Energy Loss Spectroscopy (EELS) experiments** within
+            NOMAD. It is similar to the entries search, but with a
+            reduced filter set and specialized arrangement of
+            default columns.'
+          filters:
+            exclude:
+            - mainfile
+            - entry_name
+            - combine
+          filters_locked:
+            results.method.method_name: EELS
+          search_syntaxes:
+            exclude:
+            - free_text
+          columns:
+           - search_quantity: results.material.chemical_formula_hill
+             title: Formula
+             selected: true
+           - search_quantity: results.properties.spectroscopic.spectra.provenance.eels.detector_type
+             selected: true
+           - search_quantity: results.properties.spectroscopic.spectra.provenance.eels.resolution
+             selected: true
+           - search_quantity: upload_create_time
+             title: Upload time
+             selected: true
+           - search_quantity: authors
+             selected: true
+           - search_quantity: results.properties.spectroscopic.spectra.provenance.eels.min_energy
+           - search_quantity: results.properties.spectroscopic.spectra.provenance.eels.max_energy
+           - search_quantity: entry_name
+             title: Name
+           - search_quantity: entry_type
+           - search_quantity: mainfile
+           - search_quantity: comment
+           - search_quantity: references
+           - search_quantity: datasets
+           - search_quantity: published
+             title: Access
+          filter_menus:
+            options:
+              material:
+                label: Material
+              elements:
+                label: Elements / Formula
+                level: 1
+                size: xl
+              method:
+                label: Method
+              eels:
+                label: EELS
+                level: 1
+              author:
+                label: Author / Origin / Dataset
+                size: m
+              metadata:
+                label: Visibility / IDs / Schema
+              optimade:
+                label: Optimade
+                size: m
