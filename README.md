@@ -87,6 +87,12 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
 9. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
 
 #### Updating the image
+1. To update the image, just push your changes to github and a workflow runs to build the image.
+> [!NOTE]
+> There are two images, one on the main branch and one on the development branch.
+> The development branch does not include the jupyter image. The `docker-compose.yaml` files on each branch use the corresponding image.
+> It is recommended to use the development branch for testing and then push working versions to the main branch.
+
 1. Whenever you update your image you need to shut down NOMAD using
 
     ```sh
