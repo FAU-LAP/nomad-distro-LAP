@@ -93,7 +93,7 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
 > The development branch does not include the jupyter image. The `docker-compose.yaml` files on each branch use the corresponding image.
 > It is recommended to use the development branch for testing and then push working versions to the main branch.
 
-1. Whenever you update your image you need to shut down NOMAD using
+2. Whenever you update your image you need to shut down NOMAD using
 
     ```sh
     docker compose down
@@ -101,13 +101,14 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
 
     and then repeat steps 4. and 5. above.
    
-2. You can remove unused images to free up space by running
+3. You can remove unused images to free up space by running
 
     ```sh
     docker image prune -a
     ```
 
-*OR* You can run the `clean_up_pull_start_new.ps1` file of this repository in your PowerShell, which shuts down the running NOMAD, pulls the new image and starts it, for convenience.
+> [!TIP]
+> *OR* You can run the `clean_up_pull_start_new.ps1` file of this repository in your PowerShell, which shuts down the running NOMAD, pulls the new image and starts it, for convenience.
 
 #### NOMAD Remote Tools Hub (NORTH)
 
