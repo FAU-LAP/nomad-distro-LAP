@@ -29,8 +29,6 @@ repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 [project.optional-dependencies]
 plugins = [
   "pynxtools[convert]==0.10.0",
-  "nomad-schema-plugin-run>=1.0.1",
-  "nomad-schema-plugin-simulation-workflow>=1.0.1",
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.1",
   "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@40b46250c8b6b9252c8965e0fc1f417b9d9c6ece"
 ]
