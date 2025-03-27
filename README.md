@@ -1,21 +1,9 @@
-![docker image](https://github.com/FAIRmat-NFDI/nomad-distro-template/actions/workflows/docker-publish.yml/badge.svg)
+![docker image](https://github.com/FAU-LAP/nomad-distro-LAP/actions/workflows/docker-publish.yml/badge.svg)
 
-# NOMAD Oasis Distribution *Template*
-This repository is a template for creating your own custom NOMAD Oasis distribution image.
-Click [here](https://github.com/new?template_name=nomad-distro-template&template_owner=FAIRmat-NFDI)
-to use this template, or click the `Use this template` button in the upper right corner of
-the main GitHub page for this template.
 
-> [!IMPORTANT] 
-> The templated repository will run a GitHub action on creation which might take a few minutes.
-> After the workflow finishes you should refresh the page and this message should disappear.
-> If this message persists you might need to trigger the workflow manually by navigating to the
-> "Actions" tab at the top, clicking "Template Repository Initialization" on the left side,
-> and triggering it by clicking "Run workflow" under the "Run workflow" button on the right.
+# FAU-LAP's NOMAD Oasis Distribution
 
-# FAIRmat-NFDI's NOMAD Oasis Distribution
-
-This is the NOMAD Oasis distribution of FAIRmat-NFDI.
+This is the NOMAD Oasis distribution of FAU-LAP.
 Below are instructions for how to [deploy this distribution](#deploying-the-distribution)
 and how to customize it through [adding plugins](#adding-a-plugin).
 
@@ -47,32 +35,36 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
 
 ### For a new Oasis
 
-1. Make sure you have [docker](https://docs.docker.com/engine/install/) installed.
+1. For testing on windows, [install WSL](https://learn.microsoft.com/en-us/windows/wsl/install).
+
+2. Make sure you have [docker](https://docs.docker.com/engine/install/) installed.
    Docker nowadays comes with `docker compose` built in. Prior, you needed to
    install the stand-alone [docker-compose](https://docs.docker.com/compose/install/).
+  
+3. Again, testing on Windows: Add your user to the docker-users group (see the [docker install guide](https://docs.docker.com/desktop/setup/install/windows-install/#install-interactively))
 
-2. Clone the repository or download the repository as a zip file.
+4. Clone the repository or download the repository as a zip file.
 
     ```sh
-    git clone https://github.com/FAIRmat-NFDI/nomad-distro-template.git
-    cd nomad-distro-template
+    git clone https://github.com/FAU-LAP/nomad-distro-LAP.git
+    cd nomad-distro-LAP
     ```
 
     or
 
     ```sh
-    curl-L -o nomad-distro-template.zip "https://github.com/FAIRmat-NFDI/nomad-distro-template/archive/main.zip"
-    unzip nomad-distro-template.zip
-    cd nomad-distro-template
+    curl-L -o nomad-distro-LAP.zip "https://github.com/FAU-LAP/nomad-distro-LAP/archive/main.zip"
+    unzip nomad-distro-LAP.zip
+    cd nomad-distro-LAP
     ```
 
-3. _On Linux only,_ recursively change the owner of the `.volumes` directory to the nomad user (1000)
+5. _On Linux only,_ recursively change the owner of the `.volumes` directory to the nomad user (1000)
 
     ```sh
     sudo chown -R 1000 .volumes
     ```
 
-4. Pull the images specified in the `docker-compose.yaml`
+6. Pull the images specified in the `docker-compose.yaml`
 
     Note that the image needs to be public or you need to provide a PAT (see "Important" note above).
 
@@ -80,19 +72,19 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     docker compose pull
     ```
 
-5. And run it with docker compose in detached (--detach or -d) mode
+7. And run it with docker compose in detached (--detach or -d) mode
 
     ```sh
     docker compose up -d
     ```
 
-6. Optionally you can now test that NOMAD is running with
+8. Optionally you can now test that NOMAD is running with
 
     ```
     curl localhost/nomad-oasis/alive
     ```
 
-7. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
+9. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
 
 #### Updating the image
 1. Whenever you update your image you need to shut down NOMAD using
@@ -108,6 +100,8 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     ```sh
     docker image prune -a
     ```
+
+*OR* You can run the `clean_up_pull_start_new.ps1` file of this repository in your PowerShell, which shuts down the running NOMAD, pulls the new image and starts it, for convenience.
 
 #### NOMAD Remote Tools Hub (NORTH)
 
@@ -125,7 +119,7 @@ You can find more details on setting up and maintaining an Oasis in the NOMAD do
 ### For an existing Oasis
 
 If you already have an Oasis running you only need to change the image being pulled in
-your `docker-compose.yaml` with `ghcr.io/fairmat-nfdi/nomad-distro-template:main` for the services
+your `docker-compose.yaml` with `ghcr.io/fau-lap/nomad-distro-lap:main` for the services
 `worker`, `app`, `north`, and `logtransfer`.
 
 If you want to use the `nomad.yaml` from this repository you also need to comment out
@@ -190,7 +184,7 @@ This image has been added to the [`configs/nomad.yaml`](configs/nomad.yaml) duri
 The image is quite large and might cause a timeout the first time it is run. In order to avoid this you can pre pull the image with:
 
 ```
-docker pull ghcr.io/fairmat-nfdi/nomad-distro-template/jupyter:main
+docker pull ghcr.io/fau-lap/nomad-distro-lap/jupyter:main
 ```
 
 If you want additional python packages to be available to all users in the jupyter hub you can add those to the jupyter table in the [`pyproject.toml`](pyproject.toml):
@@ -237,7 +231,7 @@ Ideally all workflows should be triggered automatically but you might need to ru
 
 ## FAQ/Trouble shooting
 
-_I get an_ `Error response from daemon: Head "https://ghcr.io/v2/FAIRmat-NFDI/nomad-distro-template/manifests/main": unauthorized`
+_I get an_ `Error response from daemon: Head "https://ghcr.io/v2/FAU-LAP/nomad-distro-LAP/manifests/main": unauthorized`
 _when trying to pull my docker image._
 
 Most likely you have not made the package public or provided a personal access token (PAT).
