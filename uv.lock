@@ -3407,12 +3407,6 @@ dev = [
 plugins = [
     { name = "nomad-camels-plugin" },
     { name = "nomad-lap-schema" },
-    { name = "nomad-normalizer-plugin-bandstructure" },
-    { name = "nomad-normalizer-plugin-dos" },
-    { name = "nomad-normalizer-plugin-simulation-workflow" },
-    { name = "nomad-normalizer-plugin-soap" },
-    { name = "nomad-normalizer-plugin-spectra" },
-    { name = "nomad-normalizer-plugin-system" },
     { name = "nomad-schema-plugin-run" },
     { name = "nomad-schema-plugin-simulation-workflow" },
     { name = "pynxtools", extra = ["convert"] },
@@ -3424,30 +3418,12 @@ requires-dist = [
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
     { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=40b46250c8b6b9252c8965e0fc1f417b9d9c6ece" },
-    { name = "nomad-normalizer-plugin-bandstructure", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-dos", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-simulation-workflow", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-soap", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-spectra", marker = "extra == 'plugins'", specifier = ">=1.0" },
-    { name = "nomad-normalizer-plugin-system", marker = "extra == 'plugins'", specifier = ">=1.0" },
     { name = "nomad-schema-plugin-run", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
     { name = "nomad-schema-plugin-simulation-workflow", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
     { name = "pynxtools", extras = ["convert"], marker = "extra == 'plugins'", specifier = "==0.10.0" },
     { name = "setuptools" },
 ]
 provides-extras = ["plugins", "jupyter", "dev"]
-
-[[package]]
-name = "nomad-dos-fingerprints"
-version = "1.0.2"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/47/5d/5f6c2d7ef225a92f326103d30a6333a4bc71030f344981d15b6e31b0ec5a/nomad_dos_fingerprints-1.0.2.tar.gz", hash = "sha256:cc70624ee7f680d471e00fa31fccbc1c0bfec6410fa7f980dbaeaff2603249fe", size = 11386 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/5d/f0604fa8e642562118ad330088959623ba84cb56c965a23b34c8e2ce225a/nomad_dos_fingerprints-1.0.2-py3-none-any.whl", hash = "sha256:cc01ed88d35f751ef13c89e75faeea16fef16ab8363b3a6fcb4f810afacb6338", size = 10593 },
-]
 
 [[package]]
 name = "nomad-lab"
@@ -3580,80 +3556,6 @@ source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=40b46250c8b6b9
 dependencies = [
     { name = "nomad-lab" },
     { name = "python-magic-bin", marker = "sys_platform == 'win32'" },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-bandstructure"
-version = "1.0.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/4d/aace531ef6af3fbfea0c07f31f25e995efd2ee8b43c588a302b7aa162a48/nomad_normalizer_plugin_bandstructure-1.0.3.tar.gz", hash = "sha256:d19af02610663f0382dfc82ed568e7fdb77fbb82fa03d2557ee0020c843c99b2", size = 7150655 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/67/b9d6328dc96cd24305a0598de63b885576813f163f86aa884f11641c0785/nomad_normalizer_plugin_bandstructure-1.0.3-py3-none-any.whl", hash = "sha256:c86cfa8eab546d2fb6cd0929cf96c81c99ce5df343515e1a048dc49abb90cbe7", size = 12179 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-dos"
-version = "1.0.5"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-dos-fingerprints" },
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b3/d2/d8d33022f5f38d9a953a9a620f8ba66a606f5e527b5d6613f7f348391e3d/nomad_normalizer_plugin_dos-1.0.5.tar.gz", hash = "sha256:9f11101ce70d8126705914ed54c7532c9a18d1f2521919d63c35e35f1ee2de5e", size = 1088170 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/f3/061615643ec48c8d29a639d6e96d2e79b6c9ad7b98c1410b5e7ddeaab9c8/nomad_normalizer_plugin_dos-1.0.5-py3-none-any.whl", hash = "sha256:e111eb5cdfa58a564246188511cc56024f9adb1cea3ca52e5183bded3b16a4da", size = 12902 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-simulation-workflow"
-version = "1.0.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-    { name = "nomad-schema-plugin-simulation-workflow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ee/c6/6dce5a3c8673416dfdd603a76dad60125be499991000a2cdf8d475a05aa0/nomad_normalizer_plugin_simulation_workflow-1.0.3.tar.gz", hash = "sha256:c9b3cc7d297e116d1e235086543f1e92c9b7154ab8662efb105204f9a7a3520b", size = 102414 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/65/c60c11a563a658e58fb68360e41e26d2840ba24cdffa375528207410de6d/nomad_normalizer_plugin_simulation_workflow-1.0.3-py3-none-any.whl", hash = "sha256:1e1d9dd86feb8e7617c18c6a7b6ae33ab95bc3374cbbf3c154aa34ed45bfbffd", size = 8595 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-soap"
-version = "1.0.1"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/55/23/b2a69d31a58f5cf265cb3268c4389db76e900ea423033ccd99b54bcf89ea/nomad_normalizer_plugin_soap-1.0.1.tar.gz", hash = "sha256:d65c8fb281f20130461fa9f77f00d163e5bad215e753311da6531d8b9c3f4712", size = 228583 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/30/0f14ccac20a0113eab2256506dbae7af36085168d89f3fcb0fb49b3968e4/nomad_normalizer_plugin_soap-1.0.1-py3-none-any.whl", hash = "sha256:756e437d8a1ae95e9634f1aecc861af88a26681ab50df066e214194f6e890b0e", size = 9167 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-spectra"
-version = "1.0.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/d1/b23665806c201b0b15ab429b422e3211d6ce7a00f68397285cc8801447ef/nomad_normalizer_plugin_spectra-1.0.3.tar.gz", hash = "sha256:7968c388f24b34d00b1d840cbda3b9cb0f07f34da03c98fe3ef97a9eae3965b5", size = 102099 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/93/9761bd73d85b19684d9bb0aaa511f338dff45b1dcc9fbf6e054610781c46/nomad_normalizer_plugin_spectra-1.0.3-py3-none-any.whl", hash = "sha256:3a9e1def216ef330d29c887691bb4a78d2e387e23d3f2f3b936ec936cb424e84", size = 8512 },
-]
-
-[[package]]
-name = "nomad-normalizer-plugin-system"
-version = "1.0.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/62/da/3d4c335024877f9257243605c8dec088f0eaa56fbe1ad135ad3325298232/nomad_normalizer_plugin_system-1.0.3.tar.gz", hash = "sha256:b526e41dfbb0f5baf53e902b6392c9cbc0a12cd397e31355abac80c2b09e4d00", size = 19867380 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/2e/80b58c53ac04d58ae01cd185a7fdff9119718d4099664b8af6a5e486ba3c/nomad_normalizer_plugin_system-1.0.3-py3-none-any.whl", hash = "sha256:f8314a661630dd0c6ad79f08ff6dd02ca160a99f0eb496ba2f23bf047b81eca8", size = 12969 },
 ]
 
 [[package]]
