@@ -31,12 +31,6 @@ plugins = [
   "pynxtools[convert]==0.10.0",
   "nomad-schema-plugin-run>=1.0.1",
   "nomad-schema-plugin-simulation-workflow>=1.0.1",
-  "nomad-normalizer-plugin-bandstructure>=1.0",
-  "nomad-normalizer-plugin-dos>=1.0",
-  "nomad-normalizer-plugin-soap>=1.0",
-  "nomad-normalizer-plugin-spectra>=1.0",
-  "nomad-normalizer-plugin-system>=1.0",
-  "nomad-normalizer-plugin-simulation-workflow>=1.0",
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.1",
   "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@40b46250c8b6b9252c8965e0fc1f417b9d9c6ece"
 ]
