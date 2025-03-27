@@ -1482,20 +1482,6 @@ wheels = [
 ]
 
 [[package]]
-name = "griddataformats"
-version = "1.0.2"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "mrcfile" },
-    { name = "numpy" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/da/8b/e273fb4b3bb3d6c31b6387b34c602d96c407f535f2c58b17512f8b5a2746/GridDataFormats-1.0.2.tar.gz", hash = "sha256:b93cf7f36fce33dbc428026f26dba560d5c7ba2387caca495bad920f90094502", size = 2158614 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/ab/9cae972ca177f7c64017f4b76f3780c832da52737b95c3e39ed0701af7a7/GridDataFormats-1.0.2-py3-none-any.whl", hash = "sha256:4562bb2da9a064a8e6640e5fb853e204c8f32f6403651703f6b0ef58a009054c", size = 2140075 },
-]
-
-[[package]]
 name = "gunicorn"
 version = "21.2.0"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
@@ -2770,39 +2756,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mdanalysis"
-version = "2.9.0"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "filelock" },
-    { name = "griddataformats" },
-    { name = "joblib" },
-    { name = "matplotlib" },
-    { name = "mda-xdrlib" },
-    { name = "mmtf-python" },
-    { name = "numpy" },
-    { name = "packaging" },
-    { name = "scipy" },
-    { name = "threadpoolctl" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/0b/ad2805c66246cbc9b7dca5a086316da0687135b5c6786da7b75ea9e1622d/mdanalysis-2.9.0.tar.gz", hash = "sha256:fe7a4ac33e7a5c1001d954667d7e630aeb26cab6f8917fdbac6ffad903999497", size = 5156874 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/36/b5/4e50bf4bc63dbf51ea3f6371ab8f27ef6e49f2a295d0a873e0093e16a71d/mdanalysis-2.9.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1c39ca99fc822bc4aed686f9b636bc8af489d9cbf1f7d7def65894a0afeaec8a", size = 6560145 },
-    { url = "https://files.pythonhosted.org/packages/8f/f6/5e6ee36b67d55749f6c8c60a5eceb019f31c4a077e1fa45e807e2896e665/mdanalysis-2.9.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:88d0653d7f9ef5ce65bd63a5ce76284dbaa002262cc731a1cc2e2eef82ba8d97", size = 6466769 },
-    { url = "https://files.pythonhosted.org/packages/2c/7d/e8fa40165c3e84f179cc1176b43c0177de1507fb5f518e6c30ba9d1c7569/mdanalysis-2.9.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0d6e5d62eb8c728549543ae4feb8a024494698cc7914d31169808a4b8f3efe3c", size = 12461219 },
-    { url = "https://files.pythonhosted.org/packages/4a/98/c9a6b2d8fb0abefe3f512518fecb5497de106ced1ce9cc62b6ba40702926/mdanalysis-2.9.0-cp310-cp310-win_amd64.whl", hash = "sha256:85369de6296491d39b97023bdee599fe5f07ec678d60efb5390b5aefc576783c", size = 6388960 },
-    { url = "https://files.pythonhosted.org/packages/0f/e7/d6847d62dcddb2840c34a2a5b1c11719a6555960870bd30009bd28785af3/mdanalysis-2.9.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:68f4f710f7c0ced95630cb5a6e5a1e61038f207106a963879cfecaebb4e6ca29", size = 6561484 },
-    { url = "https://files.pythonhosted.org/packages/b2/f9/22d172baaa9f7835e3bff8cc47556994e847706f9674b3d885017da670c4/mdanalysis-2.9.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c5ad6fa37ca6e14f403375d95fcb86be43bc1067ce401fe30105deac6eaa3e51", size = 6465691 },
-    { url = "https://files.pythonhosted.org/packages/79/0a/4a188b1027da4335f9fda8ed4a57e16bfdc8c0bcd24a3538b88cd32bfbb1/mdanalysis-2.9.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:13951ccb5c03e3c79ee5bbd4670fcece7060622161989b5eb2c389321f0df218", size = 12989491 },
-    { url = "https://files.pythonhosted.org/packages/36/9e/686eb5e6b8d251ae1659a9e1bca01271eaeef3309cc3c17f54f6254d87b7/mdanalysis-2.9.0-cp311-cp311-win_amd64.whl", hash = "sha256:ca3e1e1b26683e8f5efd96d9b3cb84da1ee463136017113ee860d651224e7afb", size = 6391158 },
-    { url = "https://files.pythonhosted.org/packages/49/bd/6c15e33c08e8a15d9526d3662317bee73623340571cae32be3ee3c9bcc6b/mdanalysis-2.9.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:18f5207a7b0098e2837ddef8eb7cd2a8db70aa1e9f11e014189e5d923914ce21", size = 6581583 },
-    { url = "https://files.pythonhosted.org/packages/38/a1/75f01707e41c30191908d134ea4917d3d6bdd3a525b59283e8970b57969a/mdanalysis-2.9.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8465e9a3b45ce6c188bdba472a27b80f1144b0c7127b8c4ed0156033bebfb5b6", size = 6471558 },
-    { url = "https://files.pythonhosted.org/packages/a2/4f/31c87a03b0ae25fd9315704167d565a942cacca446fcbaf76a669c6e85d2/mdanalysis-2.9.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:486714919f08fe18f98bf80bec404dbc4face94803c1775d88340a148503683d", size = 12886888 },
-    { url = "https://files.pythonhosted.org/packages/0b/a7/043d4f83baef204b943aa95c2f4defc3f70a86dd17969394b6702b3c361d/mdanalysis-2.9.0-cp312-cp312-win_amd64.whl", hash = "sha256:7a2ea6388a4af7af5734d5d248d2c127d1548f465efa2eff6aa5d9ab9b674112", size = 6394518 },
-]
-
-[[package]]
 name = "mergedeep"
 version = "1.3.4"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
@@ -2962,18 +2915,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mmtf-python"
-version = "1.1.3"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "msgpack" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/0f/f3c132dc9aac9a3f32a0eba7a80f07d14e7624e96f9245eeac5fe48f42cd/mmtf-python-1.1.3.tar.gz", hash = "sha256:12a02fe1b7131f0a2b8ce45b46f1e0cdd28b9818fe4499554c26884987ea0c32", size = 46032 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/f1/efea3da858043ed9c078f507ab744b6d00933c7bc8a75a24821937600178/mmtf_python-1.1.3-py2.py3-none-any.whl", hash = "sha256:502031c509a8a6d73e042781abbd88b84c1afffe65097eb0c1b70f329ffd1e6e", size = 25252 },
-]
-
-[[package]]
 name = "mongoengine"
 version = "0.29.1"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
@@ -3019,18 +2960,6 @@ source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages
 sdist = { url = "https://files.pythonhosted.org/packages/e0/47/dd32fa426cc72114383ac549964eecb20ecfd886d1e5ccf5340b55b02f57/mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f", size = 508106 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c", size = 536198 },
-]
-
-[[package]]
-name = "mrcfile"
-version = "1.5.4"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/56/22/8834f44c2455291e241fb2543c2d5d4f0fe58fd63ad0f42e86570f0b1161/mrcfile-1.5.4.tar.gz", hash = "sha256:8fa9eb2e237d87d99b301c61bf02854dd85a451db25eefcbe142c09b36d8d601", size = 52052606 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/cb/3f4ee8233f30c7926f1ed4885ff32b79ec7ce3210370f43e1cb2b385bed6/mrcfile-1.5.4-py2.py3-none-any.whl", hash = "sha256:195370a13db5ce19600499f9bdf90fd9888979bf39de19a17c19024436c6f4c2", size = 45012 },
 ]
 
 [[package]]
@@ -3407,8 +3336,6 @@ dev = [
 plugins = [
     { name = "nomad-camels-plugin" },
     { name = "nomad-lap-schema" },
-    { name = "nomad-schema-plugin-run" },
-    { name = "nomad-schema-plugin-simulation-workflow" },
     { name = "pynxtools", extra = ["convert"] },
 ]
 
@@ -3418,8 +3345,6 @@ requires-dist = [
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
     { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=40b46250c8b6b9252c8965e0fc1f417b9d9c6ece" },
-    { name = "nomad-schema-plugin-run", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
-    { name = "nomad-schema-plugin-simulation-workflow", marker = "extra == 'plugins'", specifier = ">=1.0.1" },
     { name = "pynxtools", extras = ["convert"], marker = "extra == 'plugins'", specifier = "==0.10.0" },
     { name = "setuptools" },
 ]
@@ -3556,34 +3481,6 @@ source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=40b46250c8b6b9
 dependencies = [
     { name = "nomad-lab" },
     { name = "python-magic-bin", marker = "sys_platform == 'win32'" },
-]
-
-[[package]]
-name = "nomad-schema-plugin-run"
-version = "1.0.4"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "nomad-lab" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/48/04/6d3094476243237782367f45ab248d90bea5015840b938e88ba73fc3d29e/nomad_schema_plugin_run-1.0.4.tar.gz", hash = "sha256:5fe6c0408ed28c63e26185ef3bb4df224c60384214c0ab110f67c60995017174", size = 138242 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/47/b78cf07b19fb1613b454453209d55503d1c009b202498ee95b9ebd92d5b4/nomad_schema_plugin_run-1.0.4-py3-none-any.whl", hash = "sha256:2e8ad2be33c189ab64d1a81e687a82b5441fd5bd82e44081767ed0d6465dafa8", size = 45332 },
-]
-
-[[package]]
-name = "nomad-schema-plugin-simulation-workflow"
-version = "1.0.9"
-source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
-dependencies = [
-    { name = "mdanalysis" },
-    { name = "networkx" },
-    { name = "nomad-lab" },
-    { name = "nomad-schema-plugin-run" },
-    { name = "scipy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/06/e8/ec357f148972c4da18084401a509a882d04b480ad33cb0c5362c835cd835/nomad_schema_plugin_simulation_workflow-1.0.9.tar.gz", hash = "sha256:241d8e11c642ef0c5f14061722e33babf33901995a7ebe91c0bdf6dfe42e85d0", size = 8866796 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/b4/8c4df1cde169fd38ac1917032fca8d99574a9c2649b977b5aaf992e27748/nomad_schema_plugin_simulation_workflow-1.0.9-py3-none-any.whl", hash = "sha256:d2110a81759948516faa8827610d7fed4509935be29fae3a4f001195ec0fcc1c", size = 55355 },
 ]
 
 [[package]]
