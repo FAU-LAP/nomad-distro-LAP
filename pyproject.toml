@@ -28,7 +28,7 @@ repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 
 [project.optional-dependencies]
 plugins = [
-  "pynxtools[convert]==0.10.1",
+  "pynxtools[convert]==0.10.4",
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.1",
   "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@cafbd2e6e5c1d5276712fb4644fd7032e0af2bea"
 ]
