@@ -33,6 +33,8 @@ plugins:
   entry_points:
     exclude:
       - nomad_porous_materials.normalizers:porositynormalizer
+      - pynxtools_spm.app:spm_app
+      - pynxtools_raman.nomad:raman_app
       - example_uploads/1_basic_examples/1_theory
       - example_uploads/1_basic_examples/2_eln
       - example_uploads/1_basic_examples/3_tables

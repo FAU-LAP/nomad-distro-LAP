@@ -3275,6 +3275,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nomad-camels-toolbox"
+version = "0.2.5"
+source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
+dependencies = [
+    { name = "h5py" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/05/f3/5655a5c8bd574e0510d021c5a533abc1d858968dc400607cc1e6d31ff847/nomad_camels_toolbox-0.2.5.tar.gz", hash = "sha256:fe41d8c64ee18b25fbedd0681be04dc140b4661052462e8876a23ace45e98458", size = 31459, upload_time = "2025-05-20T09:34:38.656Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/fb/940ea32472a9ad88dbc4a4acd468c9e9e792829cbb562b96370038415a23/nomad_camels_toolbox-0.2.5-py3-none-any.whl", hash = "sha256:4eaeac44303865c7999dd518426de152a757ffc6ba64bdb17e3c6da61ca04d2b", size = 33829, upload_time = "2025-05-20T09:34:36.752Z" },
+]
+
+[[package]]
 name = "nomad-distribution"
 source = { editable = "." }
 dependencies = [
@@ -3286,6 +3298,9 @@ dependencies = [
 dev = [
     { name = "nomad-lab", extra = ["dev", "infrastructure", "parsing"] },
 ]
+jupyter = [
+    { name = "nomad-camels-toolbox" },
+]
 plugins = [
     { name = "nomad-camels-plugin" },
     { name = "nomad-lap-schema" },
@@ -3295,10 +3310,11 @@ plugins = [
 [package.metadata]
 requires-dist = [
     { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.2" },
+    { name = "nomad-camels-toolbox", marker = "extra == 'jupyter'" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
-    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=f53b38841c6d5fd6eeea72ba7efcba55ec23c1bb" },
-    { name = "pynxtools", extras = ["convert"], marker = "extra == 'plugins'", specifier = "==0.10.1" },
+    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=d433107c73e374a056ac8da7e2e51aba4e5b1a06" },
+    { name = "pynxtools", extras = ["convert"], marker = "extra == 'plugins'", specifier = "==0.10.4" },
     { name = "setuptools" },
 ]
 provides-extras = ["plugins", "jupyter", "dev"]
@@ -3430,7 +3446,7 @@ parsing = [
 [[package]]
 name = "nomad-lap-schema"
 version = "0.1.0"
-source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=f53b38841c6d5fd6eeea72ba7efcba55ec23c1bb#f53b38841c6d5fd6eeea72ba7efcba55ec23c1bb" }
+source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=d433107c73e374a056ac8da7e2e51aba4e5b1a06#d433107c73e374a056ac8da7e2e51aba4e5b1a06" }
 dependencies = [
     { name = "nomad-lab" },
     { name = "python-magic-bin", marker = "sys_platform == 'win32'" },
@@ -4483,7 +4499,7 @@ wheels = [
 
 [[package]]
 name = "pynxtools"
-version = "0.10.1"
+version = "0.10.4"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
 dependencies = [
     { name = "anytree" },
@@ -4501,9 +4517,9 @@ dependencies = [
     { name = "toposort" },
     { name = "xarray" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/45/3c/499c9fb00e26f4e0057bf0052fa2a6ad8cf6c3a2a6fba3c3e0937e855022/pynxtools-0.10.1.tar.gz", hash = "sha256:0627d3dc03928d2e310f19395c29869aadb8170fd0f1e8e0db86498c3903ed76", size = 5424016, upload_time = "2025-03-25T15:06:57.769Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/36/eb/55c8062ba725228241d5ae16f4235b0d03c6d74d2f67464582663d609543/pynxtools-0.10.4.tar.gz", hash = "sha256:97c9bf9d7327706aa45b130882bf06cb92689464b4cf7b0abfad81d6ffd81602", size = 5344175, upload_time = "2025-04-08T14:10:49.097Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/d0/a4b91e0a285d89b89b2b809ac97cc80f079f212cb454c8acac21ed30ae02/pynxtools-0.10.1-py3-none-any.whl", hash = "sha256:7ee279cea39f8b01a5730b8913d02f25ce7784d4cec27b121eee4dbdeccd4ee1", size = 5797950, upload_time = "2025-03-25T15:06:55.832Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/6c/520deb235d60d0b68c4b3eedad6c2c433f3ae05cb08ca56c3cfad224d107/pynxtools-0.10.4-py3-none-any.whl", hash = "sha256:5d7e2f183ceb9d8df87cffed3badfaead7ea8dedbb7b3fcc76c3ed0ae73f784b", size = 5718182, upload_time = "2025-04-08T14:10:47.086Z" },
 ]
 
 [package.optional-dependencies]
