@@ -647,10 +647,3 @@ plugins:
               optimade:
                 label: Optimade
                 size: m
-      apps/3_experiment/3_CAMELS_App:
-        entry_point_type: app
-        app:
-          label: CAMELS App
-          path: camels_app
-          category: Experiment
-          description: Search CAMELS measurements
