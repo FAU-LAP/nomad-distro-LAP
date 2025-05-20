@@ -33,6 +33,8 @@ plugins:
   entry_points:
     exclude:
       - nomad_porous_materials.normalizers:porositynormalizer
+      - pynxtools_spm.app:spm_app
+      - pynxtools_raman.nomad:raman_app
       - example_uploads/1_basic_examples/1_theory
       - example_uploads/1_basic_examples/2_eln
       - example_uploads/1_basic_examples/3_tables
@@ -41,8 +43,6 @@ plugins:
       - apps/2_theory/1_calculations
       - apps/2_theory/2_materials
       - apps/3_experiment/2_eels
-      - apps/3_experiment/3_SPM
-      - apps/3_experiment/5_raman
     # entry point options copied from default settings, used mainly to turn off
     options:
       example_uploads/1_basic_examples/1_theory:
@@ -647,20 +647,10 @@ plugins:
               optimade:
                 label: Optimade
                 size: m
-      apps/3_experiment/3_SPM:
-        entry_point_type: app
-        app:
-          label: SPM
-          path: spm
-      apps/3_experiment/4_CAMELS_App:
+      apps/3_experiment/3_CAMELS_App:
         entry_point_type: app
         app:
           label: CAMELS App
           path: camels_app
           category: Experiment
           description: Search CAMELS measurements
-      apps/3_experiment/5_raman:
-        entry_point_type: app
-        app:
-          label: Raman
-          path: raman
