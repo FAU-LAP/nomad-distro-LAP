@@ -157,7 +157,6 @@ jobs:
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             NOMAD_DOCS_REPO=${{ env.NOMAD_DOCS_REPO }}
             JUPYTER_VERSION=${{ env.JUPYTER_VERSION }}
-            JSONSCHEMA_VERSION=3.2.0
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: ${{ matrix.target }}
