@@ -7,6 +7,7 @@
 ARG PYTHON_VERSION=3.12
 ARG UV_VERSION=0.7
 ARG JUPYTER_VERSION=2025-04-14
+ARG JSONSCHEMA_VERSION=3.2.0
 
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv_image
 
@@ -205,6 +206,8 @@ WORKDIR "${HOME}"
 
 COPY --from=uv_image /uv /bin/uv
 COPY --from=jupyter_builder /opt/conda /opt/conda
+
+RUN uv pip install jsonschema==${JSONSCHEMA_VERSION}
 
 
 # Get rid ot the following message when you open a terminal in jupyterlab:
