@@ -7,7 +7,6 @@
 ARG PYTHON_VERSION=3.12
 ARG UV_VERSION=0.7
 ARG JUPYTER_VERSION=2025-04-14
-ARG JSONSCHEMA_VERSION=3.2.0
 
 FROM ghcr.io/astral-sh/uv:${UV_VERSION} AS uv_image
 
@@ -139,21 +138,14 @@ VOLUME /app/.volumes/fs
 
 FROM quay.io/jupyter/base-notebook:${JUPYTER_VERSION} AS jupyter_builder
 
-ARG JSONSCHEMA_VERSION
-
 ENV UV_PROJECT_ENVIRONMENT=/opt/conda \
-    UV_FROZEN=1 \
-    MPLCONFIGDIR=/tmp/.cache/matplotlib
+    UV_FROZEN=1
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
-RUN /opt/conda/bin/pip install --upgrade pip \
- && /opt/conda/bin/pip install "jsonschema==${JSONSCHEMA_VERSION}" \
- && chown -R ${NB_UID}:${NB_GID} /opt/conda/lib/python${PYTHON_VERSION}/site-packages/jsonschema-* \
- && rm -rf /home/jovyan/.cache/pip
 
 RUN apt-get update \
  && apt-get install --yes --quiet --no-install-recommends \
