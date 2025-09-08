@@ -139,6 +139,8 @@ VOLUME /app/.volumes/fs
 
 FROM quay.io/jupyter/base-notebook:${JUPYTER_VERSION} AS jupyter_builder
 
+ARG JSONSCHEMA_VERSION
+
 ENV UV_PROJECT_ENVIRONMENT=/opt/conda \
     UV_FROZEN=1 \
     MPLCONFIGDIR=/tmp/.cache/matplotlib
