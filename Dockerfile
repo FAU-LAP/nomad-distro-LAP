@@ -150,6 +150,10 @@ ENV UV_PROJECT_ENVIRONMENT=/opt/conda \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
+RUN /opt/conda/bin/pip install --upgrade pip \
+ && /opt/conda/bin/pip install "jsonschema==${JSONSCHEMA_VERSION}" \
+ && chown -R ${NB_UID}:${NB_GID} /opt/conda/lib/python${PYTHON_VERSION}/site-packages/jsonschema-* \
+ && rm -rf /home/jovyan/.cache/pip
 
 RUN apt-get update \
  && apt-get install --yes --quiet --no-install-recommends \
@@ -164,11 +168,6 @@ RUN apt-get update \
       git \
       # clean cache and logs
       && rm -rf /var/lib/apt/lists/* /var/log/* /var/tmp/* ~/.npm
-
-# install exactly the JSONSchema version you passed in
-RUN /opt/conda/bin/pip install --upgrade pip \
- && /opt/conda/bin/pip install "jsonschema==${JSONSCHEMA_VERSION}" \
- && rm -rf /home/jovyan/.cache/pip
 
 # Switch back to jovyan to avoid accidental container runs as root
 USER ${NB_UID}
