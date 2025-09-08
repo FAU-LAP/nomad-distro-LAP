@@ -141,6 +141,7 @@ FROM quay.io/jupyter/base-notebook:${JUPYTER_VERSION} AS jupyter_builder
 
 ENV UV_PROJECT_ENVIRONMENT=/opt/conda \
     UV_FROZEN=1
+    MPLCONFIGDIR=/tmp/.cache/matplotlib
 
 # Fix: https://github.com/hadolint/hadolint/wiki/DL4006
 # Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
@@ -161,6 +162,11 @@ RUN apt-get update \
       git \
       # clean cache and logs
       && rm -rf /var/lib/apt/lists/* /var/log/* /var/tmp/* ~/.npm
+
+# install exactly the JSONSchema version you passed in
+RUN /opt/conda/bin/pip install --upgrade pip \
+ && /opt/conda/bin/pip install "jsonschema==${JSONSCHEMA_VERSION}" \
+ && rm -rf /home/jovyan/.cache/pip
 
 # Switch back to jovyan to avoid accidental container runs as root
 USER ${NB_UID}
@@ -206,8 +212,6 @@ WORKDIR "${HOME}"
 
 COPY --from=uv_image /uv /bin/uv
 COPY --from=jupyter_builder /opt/conda /opt/conda
-
-RUN uv pip install jsonschema==${JSONSCHEMA_VERSION}
 
 
 # Get rid ot the following message when you open a terminal in jupyterlab:
