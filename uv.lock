@@ -1647,7 +1647,7 @@ wheels = [
 [[package]]
 name = "nomad-camels-plugin"
 version = "0.1.2"
-source = { git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.6#f4981d1cdb438072afb0d0b49b5c2e7ef9d746a8" }
+source = { git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.7#d7da00a426831f80abb0687244f5d42479aece93" }
 dependencies = [
     { name = "nomad-camels-toolbox", extra = ["plotly"] },
     { name = "nomad-lab", extra = ["infrastructure"] },
@@ -1656,14 +1656,14 @@ dependencies = [
 
 [[package]]
 name = "nomad-camels-toolbox"
-version = "0.3.2"
+version = "0.4.1"
 source = { registry = "https://gitlab.mpcdf.mpg.de/api/v4/projects/2187/packages/pypi/simple" }
 dependencies = [
     { name = "h5py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/f5/86a094f709f6e052860237760d4a682bc861ed9244444bd8d1e2d1435dca/nomad_camels_toolbox-0.3.2.tar.gz", hash = "sha256:58b0094f47866b8d65c4182b02c95ee23af99c29d2f509eac86be238f092f418", size = 32099, upload-time = "2025-09-08T07:52:57.966Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/65/27/f5f6d55f064b96306b869c7be97eee377b08717be0260d47a3433b9522bc/nomad_camels_toolbox-0.4.1.tar.gz", hash = "sha256:e1d5486529af1306b1a95b3f4f7f1e50348ea47a0460cdace8158324d78d56ef", size = 36228, upload-time = "2025-10-31T08:00:10.567Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d7/50/f4c5e4f7b19deeb9617ab71e534186b13b6be7b6ffc9cf232969d74de830/nomad_camels_toolbox-0.3.2-py3-none-any.whl", hash = "sha256:c70265fdae65bcb9f7a1fa6f8ec9e426e3dd53c7795819731fdff0935c3642e2", size = 35045, upload-time = "2025-09-08T07:52:57.039Z" },
+    { url = "https://files.pythonhosted.org/packages/31/ff/03dc53dee8bda2bff3f6611e86d15cbbaf4703d39d3179326720579e2a1d/nomad_camels_toolbox-0.4.1-py3-none-any.whl", hash = "sha256:70ee3b85b344c6f7ab285892de76c2f3c0a17ae137ef479e4fd100ab907cf555", size = 39398, upload-time = "2025-10-31T08:00:09.034Z" },
 ]
 
 [package.optional-dependencies]
@@ -1692,7 +1692,7 @@ plugins = [
 
 [package.metadata]
 requires-dist = [
-    { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.6" },
+    { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.7" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
     { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=61322e9f3bf6a68ce194125cd976f84ad96a489b" },
