@@ -1646,8 +1646,8 @@ wheels = [
 
 [[package]]
 name = "nomad-camels-plugin"
-version = "0.1.2"
-source = { git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.8#3b0487ee8278263eff5f47efc8e81bf5fd4b6155" }
+version = "0.1.9"
+source = { git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.9#f4d83f584e859c1abaff445bd61cd7128db48287" }
 dependencies = [
     { name = "nomad-camels-toolbox", extra = ["plotly"] },
     { name = "nomad-lab", extra = ["infrastructure"] },
@@ -1692,7 +1692,7 @@ plugins = [
 
 [package.metadata]
 requires-dist = [
-    { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.8" },
+    { name = "nomad-camels-plugin", marker = "extra == 'plugins'", git = "https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git?rev=v0.1.9" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = ">=1.3.4" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = ">=1.3.4" },
     { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=61322e9f3bf6a68ce194125cd976f84ad96a489b" },
