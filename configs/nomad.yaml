@@ -9,11 +9,11 @@ oasis:
   uses_central_user_management: true
 
 north:
-  jupyterhub_crypt_key: "978bfb2e13a8448a253c629d8dd84ff89587f30e635b753153960930cad9d36d"
-  tools:
-    options:
-      jupyter:
-        image: ghcr.io/fau-lap/nomad-distro-lap/jupyter:main
+  enabled: true
+  enable_new_hub_api: true
+
+temporal:
+  enabled: true
 
 meta:
   deployment: "oasis"
@@ -45,6 +45,9 @@ plugins:
       - apps/3_experiment/2_eels
     # entry point options copied from default settings, used mainly to turn off
     options:
+      nomad_north_jupyter.north_tools:jupyter:
+        north_tool:
+          image: ghcr.io/fairmat-nfdi/nomad-north-jupyter:latest
       example_uploads/1_basic_examples/1_theory:
         entry_point_type: example_upload
         from_examples_directory: true
