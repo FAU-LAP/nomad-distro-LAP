@@ -18,9 +18,9 @@ name = "nomad-distribution"
 description = "nomad distribution for LAP"
 dynamic = ["version"]
 readme = "README.md"
-requires-python = ">=3.10, <3.13"
+requires-python = ">=3.11, <3.13"
 license = { file = "LICENSE" }
-dependencies = ["nomad-lab[parsing, infrastructure]==1.4.3", "setuptools"]
+dependencies = ["nomad-lab[parsing, infrastructure]==2.0.1", "setuptools"]
 
 
 [project.urls]
@@ -29,13 +29,14 @@ repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 [project.optional-dependencies]
 plugins = [
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.9",
-  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@4d981dc2f3d8c3520bc5fbfaf05e2d546deffc04",
+  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@766df6af63c899965dc5746bc3585e8def181a46",
   "nomad-north-jupyter>=0.2.6",
+  "nomad-gui==2.0.1",
 ]
 jupyter = ["jupyter-events"]
 gpu-action = []
 cpu-action = []
-dev = ["nomad-lab[parsing, infrastructure, dev]==1.4.3"]
+dev = ["nomad-lab[parsing, infrastructure, dev]==2.0.1"]
 
 [tool.uv]
 extra-index-url = [
