@@ -23,7 +23,9 @@ env:
   NOMAD_DOCS_REPO_REF: ""
   # If you want to skip the tests for some plugins, add them here as a single string where
   # each plugin is separated by a comma or a line break
-  PLUGIN_TESTS_PLUGINS_TO_SKIP: ""
+  # nomad_gui: the nomad-gui repository has no v2.0.1 tag, so its tests cannot be checked out.
+  # Remove it once the tag exists.
+  PLUGIN_TESTS_PLUGINS_TO_SKIP: "nomad_gui"
 
 permissions:
   contents: write
