@@ -39,7 +39,7 @@ jobs:
     outputs:
       scm_version: ${{ steps.get_scm_version.outputs.scm_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           submodules: true
@@ -86,7 +86,7 @@ jobs:
     env:
       PLUGIN_TESTS_CI_NODE_TOTAL: 2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           submodules: true
@@ -126,7 +126,7 @@ jobs:
       SETUPTOOLS_SCM_PRETEND_VERSION_FOR_NOMAD_DISTRIBUTION: ${{ needs.update-lockfile.outputs.scm_version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           submodules: true
@@ -182,7 +182,7 @@ jobs:
       JUPYTER_IMAGE: ${{ needs.build.outputs.jupyter_image }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.head_ref || github.ref_name }}
           submodules: true
