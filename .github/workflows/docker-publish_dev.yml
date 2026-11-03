@@ -146,7 +146,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ github.repository }}${{ matrix.service == 'jupyter' && '/jupyter_dev' || '_dev' }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: |
