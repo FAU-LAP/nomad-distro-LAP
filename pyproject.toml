@@ -29,7 +29,7 @@ repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 [project.optional-dependencies]
 plugins = [
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.9",
-  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@766df6af63c899965dc5746bc3585e8def181a46",
+  "nomad-lap-schema @ git+https://github.com/FAU-LAP/nomad-lap-schema@cb09e3d59e1c17e9e1445e7f7bf05b12d50b161b",
   "nomad-north-jupyter>=0.2.6",
   "nomad-gui==2.0.1",
 ]
