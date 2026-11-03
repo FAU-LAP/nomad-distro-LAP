@@ -66,7 +66,17 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     sudo chown -R 1000 .volumes
     ```
 
-6. Pull the images specified in the `docker-compose.yaml`
+6. Create the `.env` and `.env.north` files with random secrets. They store sensitive
+   information, are ignored by git, and `docker compose` will not start without them.
+
+    ```sh
+    bash scripts/generate-env.sh
+    ```
+
+    On a server, also change `OAUTH_CALLBACK_URL` of the `north` service in
+    `docker-compose.yaml` from `localhost` to the server's hostname.
+
+7. Pull the images specified in the `docker-compose.yaml`
 
     Note that the image needs to be public or you need to provide a PAT (see "Important" note above).
 
@@ -74,19 +84,27 @@ Below are instructions for how to deploy this NOMAD Oasis distribution
     docker compose pull
     ```
 
-7. And run it with docker compose in detached (--detach or -d) mode
+8. And run it with docker compose in detached (--detach or -d) mode
 
     ```sh
     docker compose up -d
     ```
 
-8. Optionally you can now test that NOMAD is running with
+9. Optionally you can now test that NOMAD is running with
 
     ```
-    curl localhost/nomad-oasis/alive
+    curl localhost/backend/alive
     ```
 
-9. Finally, open [http://localhost/nomad-oasis](http://localhost/nomad-oasis) in your browser to start using your new NOMAD Oasis.
+10. Finally, open [http://localhost](http://localhost) in your browser to start using your new NOMAD Oasis.
+
+    The new GUI is served from the root path and the classic GUI from `/gui`. The NOMAD API
+    and other backend services live under `/backend` (e.g. `http://localhost/backend/api/v1`).
+    Links using the former `/nomad-oasis` base path are redirected automatically.
+
+    If you are upgrading an existing Oasis from NOMAD 1.x, the MongoDB and Elasticsearch
+    data must be migrated first, see the
+    [NOMAD Oasis Migration Guide](https://docs.nomad-lab.eu/howto/oasis/migrate.html).
 
 #### Updating the image
 1. To update the image, just push your changes to github and a workflow runs to build the image.

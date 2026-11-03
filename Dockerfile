@@ -46,9 +46,6 @@ RUN apt-get update \
        curl \
        zip \
        unzip \
-       nodejs \
-       npm \
-       && npm install -g configurable-http-proxy@^4.2.0 \
        # clean cache and logs
        && rm -rf /var/lib/apt/lists/* /var/log/* /var/tmp/* ~/.npm
 
@@ -96,29 +93,60 @@ FROM builder AS docs
 
 WORKDIR /app
 
-ARG NOMAD_DOCS_REPO="https://github.com/FAIRmat-NFDI/nomad-docs.git"
+ARG NOMAD_DOCS_REPO=""
+ARG NOMAD_DOCS_REPO_REF=""
 
-RUN set -ex && \
-    echo "Cloning from: $NOMAD_DOCS_REPO" && \
-    git clone "$NOMAD_DOCS_REPO" docs
+# Builds custom documentation only if both NOMAD_DOCS_REPO and NOMAD_DOCS_REPO_REF
+# are provided. Otherwise /app/built_docs is left empty and the official docs at
+# https://docs.nomad-lab.eu are used instead.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    set -ex && \
+    mkdir -p /app/built_docs && \
+    if [ -n "${NOMAD_DOCS_REPO}" ] && [ -n "${NOMAD_DOCS_REPO_REF}" ]; then \
+        # Clone the documentation repository and check out the provided ref \
+        echo "Cloning from: ${NOMAD_DOCS_REPO}" && \
+        git clone "${NOMAD_DOCS_REPO}" docs_repo && cd docs_repo && \
+        echo "Checking out provided ref: ${NOMAD_DOCS_REPO_REF}" && \
+        git checkout "${NOMAD_DOCS_REPO_REF}" && \
+        # Install and build documentation \
+        uv pip install . && \
+        PYTHONPATH=src uv run --no-sync mkdocs build && \
+        # Move built site to final destination \
+        mkdir -p /app/built_docs/docs && \
+        cp -r site/. /app/built_docs/docs/; \
+    else \
+        echo "NOMAD_DOCS_REPO and NOMAD_DOCS_REPO_REF not both set. Skipping docs build."; \
+    fi
+
+FROM builder AS gpu_action_builder
+
+WORKDIR /app
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv run --with nomad-docs --directory docs mkdocs build \
-    && mkdir -p built_docs \
-    && cp -r docs/site/* built_docs
+    uv sync --extra plugins --extra gpu-action
+
+FROM builder AS cpu_action_builder
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --extra plugins --extra cpu-action
 
 FROM base_final AS final
 
 ARG PYTHON_VERSION=3.12
 
 COPY --chown=nomad:${UID} --from=builder /opt/venv /opt/venv
-COPY --chown=nomad:${UID} scripts/run.sh .
-COPY --chown=nomad:${UID} scripts/run-worker.sh .
 COPY configs/nomad.yaml nomad.yaml
 COPY pyproject.toml uv.lock /opt/
-COPY --chown=nomad:${UID} --from=docs /app/built_docs /opt/venv/lib/python${PYTHON_VERSION}/site-packages/nomad/app/static/docs
+# Copies the custom docs into static/docs, or nothing if the docs build was skipped
+COPY --chown=nomad:${UID} --from=docs /app/built_docs/ /opt/venv/lib/python${PYTHON_VERSION}/site-packages/nomad/app/static/
 
 RUN mkdir -p /app/.volumes/fs \
  && chown -R nomad:${UID} /app \
@@ -134,6 +162,14 @@ EXPOSE 8000
 EXPOSE 9000
 
 VOLUME /app/.volumes/fs
+
+FROM final AS cpu_action_final
+
+COPY --chown=nomad:${UID} --from=cpu_action_builder /opt/venv /opt/venv
+
+FROM final AS gpu_action_final
+
+COPY --chown=nomad:${UID} --from=gpu_action_builder /opt/venv /opt/venv
 
 
 FROM quay.io/jupyter/base-notebook:${JUPYTER_VERSION} AS jupyter_builder
