@@ -2262,7 +2262,7 @@ requires-dist = [
     { name = "nomad-gui", marker = "extra == 'plugins'", specifier = "==2.0.1" },
     { name = "nomad-lab", extras = ["dev", "infrastructure", "parsing"], marker = "extra == 'dev'", specifier = "==2.0.1" },
     { name = "nomad-lab", extras = ["infrastructure", "parsing"], specifier = "==2.0.1" },
-    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=cb09e3d59e1c17e9e1445e7f7bf05b12d50b161b" },
+    { name = "nomad-lap-schema", marker = "extra == 'plugins'", git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=ec4c4bf5c88f437827eeb81a5a0aa68818efde80" },
     { name = "nomad-north-jupyter", marker = "extra == 'plugins'", specifier = ">=0.2.6" },
     { name = "setuptools" },
 ]
@@ -2396,7 +2396,7 @@ infrastructure = [
 [[package]]
 name = "nomad-lap-schema"
 version = "0.1.0"
-source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=cb09e3d59e1c17e9e1445e7f7bf05b12d50b161b#cb09e3d59e1c17e9e1445e7f7bf05b12d50b161b" }
+source = { git = "https://github.com/FAU-LAP/nomad-lap-schema?rev=ec4c4bf5c88f437827eeb81a5a0aa68818efde80#ec4c4bf5c88f437827eeb81a5a0aa68818efde80" }
 dependencies = [
     { name = "nomad-lab" },
     { name = "python-magic-bin", marker = "sys_platform == 'win32'" },
