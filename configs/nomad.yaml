@@ -11,7 +11,7 @@ plugins:
     options:
       nomad_north_jupyter.north_tools:jupyter:
         north_tool:
-          image: ghcr.io/fairmat-nfdi/nomad-north-jupyter:latest
+          image: ghcr.io/lao218/nomad_remote_camels/jupyter:main
       nomad_camels_oasis.entry_points:camels:
         # Replace this with the address reachable from the NOMAD app container.
         # Configure the key through /nomad-oasis/camels/setup. A CAMELS_API_KEY

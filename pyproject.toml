@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.urls]
-repository = "https://github.com/FAIRmat-NFDI/nomad-distro-template"
+repository = "https://github.com/lao218/nomad_remote_camels"
 
 [project.entry-points."nomad.plugin"]
 nomad_camels_oasis = "nomad_camels_oasis.entry_points:camels"
