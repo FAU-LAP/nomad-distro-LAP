@@ -53,4 +53,4 @@ extra-index-url = [
 prerelease = "if-necessary-or-explicit"
 
 [tool.setuptools.packages.find]
-exclude = ["gui*", "docs*", "config*"]
+exclude = ["gui*", "docs*", "config*", "camels_broker*"]

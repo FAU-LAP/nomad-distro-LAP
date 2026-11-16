@@ -1,0 +1,24 @@
+# Standalone broker for development and network tests, separate from the OASIS stack.
+# Usage: see camels_broker/README.md
+services:
+  camels_broker:
+    build: ..
+    image: camels-broker:dev
+    environment:
+      CAMELS_BROKER_SECRET: ${CAMELS_BROKER_SECRET:?set CAMELS_BROKER_SECRET in dev/.env}
+      CAMELS_BROKER_PUBLIC_PREFIX: /nomad-oasis/camels-remote
+    volumes:
+      - broker_data:/data
+
+  nginx:
+    image: docker.io/nginx:1.31.1-alpine
+    depends_on:
+      - camels_broker
+    ports:
+      - "${BROKER_PORT:-8443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./tls:/etc/nginx/tls:ro
+
+volumes:
+  broker_data:

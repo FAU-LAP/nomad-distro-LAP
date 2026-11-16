@@ -1,0 +1,23 @@
+# Standalone stack for the P0 network check. It shares nothing with the OASIS stack.
+name: camels-remote-p0
+
+services:
+  echo:
+    image: python:3.12-slim
+    command: >-
+      sh -c "pip install --quiet --root-user-action=ignore 'websockets>=15,<18'
+      && exec python -u /app/echo_server.py --host 0.0.0.0 --port 8765"
+    environment:
+      P0_TOKEN: ${P0_TOKEN:?Set P0_TOKEN to a long random value}
+    volumes:
+      - ./echo_server.py:/app/echo_server.py:ro
+
+  nginx:
+    image: docker.io/nginx:1.31.1-alpine
+    depends_on:
+      - echo
+    ports:
+      - ${P0_PORT:-443}:443
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./tls:/etc/nginx/tls:ro
