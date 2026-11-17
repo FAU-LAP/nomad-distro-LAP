@@ -1506,11 +1506,16 @@ def create_app(
                 continue
             # CAMELS lists only the protocols whose "Expose this protocol to
             # OASIS remote control" checkbox is enabled.
-            response = request_camels(
-                "GET",
-                "/api/v1/protocols",
-                connection=(value.get("camels_base_url", default_url).rstrip("/"), value["api_key"]),
-            )
+            try:
+                response = request_camels(
+                    "GET",
+                    "/api/v1/protocols",
+                    connection=(value.get("camels_base_url", default_url).rstrip("/"), value["api_key"]),
+                )
+            except HTTPException:
+                # An offline CAMELS or an outdated key must not hide the
+                # protocols of the other connections.
+                continue
             for discovered_name in response.get("Protocols", []):
                 if discovered_name not in connection_ids:
                     names.append(discovered_name)
