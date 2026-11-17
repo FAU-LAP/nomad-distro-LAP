@@ -10,12 +10,16 @@ Docker's cache when unchanged), then starts the single project compose stack.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import socket
 import subprocess
 
 
 ROOT = Path(__file__).resolve().parent.parent
 IMAGE = "ghcr.io/lao218/nomad_remote_camels:main"
+# The Temporal worker that runs the CAMELS measurement Actions.
+CPU_ACTION_IMAGE = "ghcr.io/lao218/nomad_remote_camels/cpu-action:main"
 
 
 def main() -> None:
@@ -33,12 +37,41 @@ def main() -> None:
         cwd=ROOT,
         check=True,
     )
+    # Same code for the worker, so Actions use the current plugin as well.
+    print("Building the CPU Action worker image ...")
+    subprocess.run(
+        ["docker", "build", "--target", "cpu_action_final", "-t", CPU_ACTION_IMAGE, "."],
+        cwd=ROOT,
+        check=True,
+    )
 
     print("Starting classic OASIS ...")
-    subprocess.run(["docker", "compose", "up", "-d"], cwd=ROOT, check=True)
+    environment = dict(os.environ)
+    host = detect_host_address()
+    if host:
+        environment["CAMELS_REMOTE_DETECTED_HOST"] = host
+    subprocess.run(["docker", "compose", "up", "-d"], cwd=ROOT, env=environment, check=True)
     print("\nReady:")
     print("  CAMELS setup: http://localhost/nomad-oasis/camels/setup")
     print("  GUI v2:       http://localhost/nomad-oasis/gui/v2/")
+    if host:
+        print(f"  Address for CAMELS (detected): https://{host}/nomad-oasis")
+
+
+def detect_host_address() -> str | None:
+    """Return this computer's IPv4 address on its main network.
+
+    Docker containers cannot see the host's network adapters, so the address is
+    detected here and passed to the app. Connecting a UDP socket sends no data;
+    it only selects the adapter that would be used for outside traffic.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+        try:
+            probe.connect(("10.255.255.255", 1))
+            address = probe.getsockname()[0]
+        except OSError:
+            return None
+    return None if address.startswith("127.") or address == "0.0.0.0" else address
 
 
 if __name__ == "__main__":

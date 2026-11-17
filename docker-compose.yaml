@@ -288,6 +288,10 @@ services:
     platform: linux/amd64
     container_name: nomad_oasis_app
     environment:
+      # Network address of the Docker host, detected by
+      # nomad_camels_oasis/start_local_camels_dashboard.py. Proposed on the
+      # setup page as the address to enter in CAMELS.
+      CAMELS_REMOTE_DETECTED_HOST: ${CAMELS_REMOTE_DETECTED_HOST:-}
       NOMAD_SERVICE: nomad_oasis_app
       NOMAD_SERVICES_API_PORT: 80
       NOMAD_FS_EXTERNAL_WORKING_DIRECTORY: "$PWD"
@@ -320,6 +324,21 @@ services:
       timeout: 10s
       retries: 30
       start_period: 10s
+
+  # Broker for CAMELS remote control. CAMELS on lab computers opens an outbound
+  # WebSocket to it through the proxy (/nomad-oasis/camels-remote/), so the lab
+  # computers need no open port. The app reaches its internal API directly.
+  # Needs CAMELS_BROKER_SECRET in .env; see camels_broker/README.md.
+  camels_broker:
+    restart: unless-stopped
+    build: ./camels_broker
+    image: camels-broker:local
+    container_name: nomad_oasis_camels_broker
+    environment:
+      CAMELS_BROKER_SECRET: ${CAMELS_BROKER_SECRET:-}
+      CAMELS_BROKER_PUBLIC_PREFIX: /nomad-oasis/camels-remote
+    volumes:
+      - camels_broker:/data
 
   # nomad remote tools hub (JupyterHUB)
   north:
@@ -400,6 +419,8 @@ services:
         condition: service_started # TODO: service_healthy
       north:
         condition: service_healthy
+      camels_broker:
+        condition: service_started
     ports:
       - 80:80
       - 443:443
@@ -425,6 +446,8 @@ volumes:
     name: "nomad_oasis_postgresql"
   nomad_north:
     name: "nomad_oasis_north"
+  camels_broker:
+    name: "nomad_oasis_camels_broker"
 
 
 networks:

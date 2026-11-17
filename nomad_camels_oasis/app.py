@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from nomad.app.v1.routers.auth import get_current_user
 from nomad.auth.scopes import Scope
 from nomad_camels_oasis.measurement_dashboard import AUTHENTICATION_REQUIRED_PAGE
+from nomad_camels_oasis import remote
 
 
 # This is a presentation limit only. The complete, lossless measurement remains
@@ -80,6 +81,10 @@ class ConnectionSettings(BaseModel):
     api_key: str = Field(min_length=1)
     name: str = Field(default="")
     connection_id: str | None = None
+
+
+class RemoteDeviceCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
 
 
 class CredentialStore:
@@ -723,6 +728,12 @@ DASHBOARD_PAGE += """<script>
   startButton.id='dashboard-start-measurement';
   startButton.textContent='Start measurement';
   row.append(startButton);
+  const stopButton=document.createElement('button');
+  stopButton.type='button';
+  stopButton.id='dashboard-stop-measurement';
+  stopButton.textContent='Stop measurement';
+  stopButton.disabled=true;
+  row.append(stopButton);
   const panel=document.createElement('section');
   panel.id='camels-measurement-progress';
   panel.style.cssText='align-self:stretch;min-width:250px;border-left:1px solid #ddd;padding-left:1rem';
@@ -736,9 +747,31 @@ DASHBOARD_PAGE += """<script>
   let measurementRunning=false;
   function updateStartAvailability(){
     startButton.disabled=actionPending || measurementRunning;
-    if(measurementRunning && !actionPending)startButton.textContent='Measurement running';
+    if(startButton.dataset.confirming==='true')startButton.textContent='Click again to start';
+    else if(measurementRunning && !actionPending)startButton.textContent='Measurement running';
     else if(!actionPending)startButton.textContent='Start measurement';
+    stopButton.disabled=!measurementRunning;
+    if(!measurementRunning){stopButton.dataset.confirming='';stopButton.textContent='Stop measurement'}
   }
+  // Starting and stopping change the instrument: both need a second click.
+  function confirmClick(button,text){
+    if(button.dataset.confirming==='true'){button.dataset.confirming='';return true}
+    button.dataset.confirming='true';button.textContent=text;
+    setTimeout(()=>{if(button.dataset.confirming==='true'){button.dataset.confirming='';if(button===stopButton)stopButton.textContent='Stop measurement';updateStartAvailability()}},4000);
+    return false;
+  }
+  stopButton.addEventListener('click',async()=>{
+    const name=protocolSelect.value;
+    if(!name || /^Loading|^No saved|^Could not load/.test(name))return;
+    if(!confirmClick(stopButton,'Click again to stop'))return;
+    stopButton.disabled=true;stopButton.textContent='Stopping...';
+    try{
+      const result=await api('stop?protocol_name='+encodeURIComponent(name),{method:'POST'});
+      detail.textContent=result.status==='idle'?'No measurement was running.':'Stop requested.';
+    }catch(error){
+      detail.textContent='Could not stop: '+String(error.message||error);
+    }finally{stopButton.textContent='Stop measurement';updateStartAvailability()}
+  });
   function duration(seconds){
     if(seconds===null || seconds===undefined || !Number.isFinite(Number(seconds)))return '-';
     seconds=Math.max(0,Math.round(Number(seconds)));
@@ -793,6 +826,7 @@ DASHBOARD_PAGE += """<script>
   startButton.addEventListener('click',async()=>{
     const name=protocolSelect.value;
     if(!name || /^Loading|^No saved|^Could not load/.test(name))return;
+    if(!confirmClick(startButton,'Click again to start'))return;
     actionPending=true;
     updateStartAvailability();
     startButton.textContent='Creating Action...';
@@ -965,6 +999,309 @@ DASHBOARD_PAGE += """<script>
 })();
 </script>"""
 
+# Remote CAMELS computers connected through the CAMELS broker.  CAMELS opens an
+# outbound connection to OASIS, so these computers need no open port.  The
+# browser only sees pairing codes and connection states; device tokens never
+# leave the broker.
+SETUP_PAGE = SETUP_PAGE.replace(
+    "</body></html>",
+    """<section id="remote-devices">
+<style>
+#remote-devices{margin-bottom:1.5rem}
+.tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:1.15rem;height:1.15rem;margin-left:.3rem;border-radius:50%;background:#2850dd;color:#fff;font-size:.75rem;font-weight:700;cursor:help;vertical-align:middle}
+.tip .tip-text{visibility:hidden;opacity:0;position:absolute;z-index:10;left:50%;top:1.6rem;transform:translateX(-50%);width:min(24rem,80vw);padding:.7rem .9rem;border-radius:6px;background:#222;color:#fff;font-size:.85rem;font-weight:400;line-height:1.45;text-align:left;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:opacity .15s}
+.tip:hover .tip-text,.tip:focus .tip-text{visibility:visible;opacity:1}
+.tip-text code{background:#444;color:#fff;border:0;padding:0 .2rem}
+.tip-text ol{margin:.3rem 0 0 1.1rem;padding:0}
+#remote-address-line label{display:inline;margin:0;font-weight:600}
+#remote-address-line input{font-family:Consolas,monospace}
+#remote-devices .hint{color:#555;font-size:.85rem;margin:.2rem 0 1rem}
+#api-connection{margin-top:1rem;padding-top:.8rem;border-top:1px solid #bbb}
+#api-connection>summary{cursor:pointer;color:#555;font-weight:600}
+#remote-devices .row{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+#remote-devices .row input{flex:1;min-width:200px;margin:0}
+#remote-devices table{width:100%;border-collapse:collapse;margin:.5rem 0}
+#remote-devices th,#remote-devices td{padding:.4rem .5rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:middle}
+#remote-devices th{font-size:.9rem;color:#444}
+#remote-devices td button{margin:0 .25rem 0 0;padding:.25rem .55rem}
+#remote-pairing{border:2px solid #2850dd;border-radius:8px;padding:1rem 1.2rem;margin:1rem 0;background:#f4f7ff}
+#remote-pairing .code{font-family:Consolas,monospace;font-size:2rem;font-weight:700;letter-spacing:.15em;user-select:all}
+#remote-pairing code{user-select:all;background:#fff;padding:.1rem .3rem;border:1px solid #ccd}
+#remote-pairing ol{margin:.5rem 0 0 1.2rem;padding:0}
+.remote-online{color:#1a7f37;font-weight:700}.remote-offline{color:#8a8f98}.remote-unpaired{color:#b26b00}
+</style>
+<h2>Remote CAMELS computers</h2>
+<p>CAMELS connects to OASIS by itself, like remote-desktop software. The lab computer needs no open port and no API key. Add a computer, then enter the pairing code in CAMELS.</p>
+<div id="remote-address-line" class="row"><label for="remote-address">OASIS address for CAMELS</label>__ADDRESS_TIP__<input id="remote-address" spellcheck="false" autocomplete="off" placeholder="https://&lt;address&gt;/nomad-oasis"><button type="button" id="remote-address-reset" hidden>Use detected</button></div>
+<p class="hint" id="remote-address-hint">Detected automatically. Change it if the lab computer reaches OASIS under another address.</p>
+<form id="remote-add" class="row"><input id="remote-name" maxlength="100" required placeholder="Name, e.g. Lab PC 1"><button type="submit">Add computer</button></form>
+<div id="remote-pairing" hidden></div>
+<table><thead><tr><th>Computer</th><th>State</th><th>Host</th><th>CAMELS</th><th>Last seen</th><th>Action</th></tr></thead><tbody id="remote-list"><tr><td colspan="6">Loading...</td></tr></tbody></table>
+<pre id="remote-result" hidden></pre>
+</section>
+<script>
+(() => {
+  const list=document.getElementById('remote-list'),pairing=document.getElementById('remote-pairing'),result=document.getElementById('remote-result');
+  const addressTip=document.querySelector('#remote-address-line .tip').outerHTML;
+  const addressInput=document.getElementById('remote-address'),addressReset=document.getElementById('remote-address-reset'),addressHint=document.getElementById('remote-address-hint'),ADDRESS_KEY='camels-remote-address';
+  let address='',countdown=null;
+  function savedAddress(){try{return localStorage.getItem(ADDRESS_KEY)||''}catch{return ''}}
+  function currentAddress(){return addressInput.value.trim().replace(/\\/+$/,'')||address}
+  function addressChanged(){
+    const value=addressInput.value.trim().replace(/\\/+$/,''),custom=value&&value!==address;
+    try{custom?localStorage.setItem(ADDRESS_KEY,value):localStorage.removeItem(ADDRESS_KEY)}catch{}
+    addressReset.hidden=!custom;
+    addressHint.textContent=custom?'Changed by you. Detected address: '+address:'Detected automatically. Change it if the lab computer reaches OASIS under another address.';
+    if(value&&!/^https:\\/\\//.test(value))addressHint.textContent='The address must start with https://';
+    const shown=document.getElementById('remote-pairing-address');if(shown)shown.textContent=currentAddress();
+  }
+  addressInput.addEventListener('input',addressChanged);
+  addressReset.onclick=()=>{addressInput.value=address;addressChanged()};
+  async function call(path,options={}){
+    const r=await fetch('./settings/remote-devices'+path,options),text=await r.text();
+    let data;try{data=JSON.parse(text)}catch{data={detail:text}}
+    if(!r.ok)throw new Error(typeof data.detail==='string'?data.detail:JSON.stringify(data.detail||data));
+    return data;
+  }
+  function say(text,ok=true){result.hidden=false;result.style.color=ok?'':'#c0392b';result.textContent=text}
+  function cell(row,content){const td=document.createElement('td');if(content instanceof Node)td.append(content);else td.textContent=content??'-';row.append(td);return td}
+  function when(seconds){return seconds?new Date(seconds*1000).toLocaleString():'-'}
+  function el(tag,text,cls){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e}
+  function showPairing(name,data){
+    clearInterval(countdown);
+    pairing.hidden=false;pairing.innerHTML='';
+    pairing.append(el('div','Pairing code for '+name));
+    pairing.append(el('div',data.pairing_code,'code'));
+    const expiry=el('div');pairing.append(expiry);
+    const steps=el('ol');
+    const step1=el('li','In CAMELS on the lab computer, open Tools > OASIS Remote Control...');
+    const step2=el('li','OASIS address: ');const shown=el('code',currentAddress());shown.id='remote-pairing-address';step2.append(shown);step2.insertAdjacentHTML('beforeend',addressTip);
+    const step3=el('li','CA certificate: only needed for a self-signed OASIS certificate.');
+    const step4=el('li','Enter the pairing code and select Pair. The state below changes to Online.');
+    steps.append(step1,step2,step3,step4);pairing.append(steps);
+    function tick(){const left=Math.round(data.pairing_code_expires_at-Date.now()/1000);
+      if(left<=0){expiry.textContent='This code has expired. Select New code to create another one.';clearInterval(countdown);return}
+      expiry.textContent='Valid once, for '+Math.floor(left/60)+':'+String(left%60).padStart(2,'0')+' min.'}
+    tick();countdown=setInterval(tick,1000);
+  }
+  function confirmButton(label,action){
+    const b=el('button',label);b.type='button';
+    b.onclick=async()=>{if(b.dataset.confirming!=='true'){b.dataset.confirming='true';b.textContent='Confirm';setTimeout(()=>{b.dataset.confirming='';b.textContent=label},4000);return}await action()};
+    return b;
+  }
+  async function refresh(){
+    try{
+      const data=await call('');const first=!address;address=data.oasis_address;if(first){addressInput.value=savedAddress()||address;addressChanged()}list.innerHTML='';
+      if(!data.devices.length){list.innerHTML='<tr><td colspan="6">No remote computer added.</td></tr>';return}
+      for(const d of data.devices){
+        const row=document.createElement('tr');
+        cell(row,d.name);
+        const state=!d.paired?['Waiting for pairing','remote-unpaired']:d.online?['Online','remote-online']:['Offline','remote-offline'];
+        cell(row,el('span',state[0],state[1]));
+        cell(row,d.hostname);cell(row,d.camels_version);cell(row,d.online?'now':when(d.last_seen));
+        const actions=cell(row,'');
+        const test=el('button','Test');test.type='button';test.disabled=!d.online;
+        test.onclick=async()=>{try{say('Asking '+d.name+' for its protocols ...');const r=await call('/'+encodeURIComponent(d.device_id)+'/test',{method:'POST'});
+          if(r.status==='completed'){const names=(r.result&&r.result.Protocols)||[];say(names.length?d.name+' exposes: '+names.join(', '):d.name+' is connected but exposes no protocol. Enable OASIS remote control for a protocol in CAMELS.')}
+          else say(d.name+': '+((r.error&&r.error.message)||r.status),false)}catch(e){say(e.message,false)}};
+        const code=el('button','New code');code.type='button';
+        code.onclick=async()=>{try{showPairing(d.name,await call('/'+encodeURIComponent(d.device_id)+'/pairing-code',{method:'POST'}))}catch(e){say(e.message,false)}};
+        const remove=confirmButton('Delete',async()=>{try{await call('/'+encodeURIComponent(d.device_id)+'/delete',{method:'POST'});pairing.hidden=true;say(d.name+' was removed. Its CAMELS can no longer connect.');refresh()}catch(e){say(e.message,false)}});
+        actions.append(test,code,remove);
+        list.append(row);
+      }
+    }catch(e){list.innerHTML='';const row=document.createElement('tr');cell(row,e.message).colSpan=6;list.append(row)}
+  }
+  document.getElementById('remote-add').addEventListener('submit',async e=>{
+    e.preventDefault();const input=document.getElementById('remote-name');
+    try{const data=await call('',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:input.value})});
+      showPairing(data.name,data);input.value='';refresh()}catch(err){say(err.message,false)}
+  });
+  refresh();setInterval(refresh,5000);
+})();
+</script></body></html>""",
+)
+
+# Hover help for the address that CAMELS needs.  Block-level content is written
+# as spans so that it may sit inside the <p> and <li> elements that show it.
+REMOTE_ADDRESS_TIP = (
+    '<span class="tip" tabindex="0" aria-label="How to find the OASIS address">?'
+    '<span class="tip-text" role="tooltip">'
+    "<strong>How to find the OASIS address</strong><br>"
+    "CAMELS on the lab computer connects to this address, so the lab computer "
+    "must be able to reach it."
+    '<span style="display:block;margin:.4rem 0 0">'
+    "1. On this OASIS computer, open PowerShell and run <code>ipconfig</code>.<br>"
+    "2. Take the <em>IPv4 Address</em> of the Ethernet or Wi-Fi adapter on the lab "
+    "network, for example <code>10.188.x.x</code>. Do not use <code>127.0.0.1</code> "
+    "or a Docker, WSL or vEthernet adapter (often <code>172.x.x.x</code>).<br>"
+    "3. On a server, use its host name instead, for example "
+    "<code>https://oasis.example.org/nomad-oasis</code>.</span>"
+    '<span style="display:block;margin:.4rem 0 0">'
+    "The address must be in the HTTPS certificate. To change the proposed address "
+    "permanently, set <code>CAMELS_REMOTE_PUBLIC_URL=https://&lt;address&gt;/nomad-oasis</code> "
+    "in <code>.env</code> and restart OASIS.</span>"
+    '<span style="display:block;margin:.4rem 0 0">'
+    "To check, open the address in a browser on the lab computer.</span>"
+    "</span></span>"
+)
+SETUP_PAGE = SETUP_PAGE.replace("__ADDRESS_TIP__", REMOTE_ADDRESS_TIP)
+
+# Remote computers are the main way to connect CAMELS.  Show them first and
+# fold the direct API-key connection, and the protocol control that still uses
+# it, into a closed section below.
+_remote_start = SETUP_PAGE.index('<section id="remote-devices">')
+_remote_end = SETUP_PAGE.index("</section>", _remote_start) + len("</section>")
+_remote_section = SETUP_PAGE[_remote_start:_remote_end]
+_heading = "<h1>CAMELS connections setup</h1>"
+_heading_end = SETUP_PAGE.index(_heading) + len(_heading)
+SETUP_PAGE = (
+    SETUP_PAGE[:_heading_end]
+    + _remote_section
+    + '<details id="api-connection"><summary>Direct API connection (older method)</summary>'
+    + '<p class="hint">Needs an open port and an API key on the lab computer. Use Remote CAMELS computers above instead.</p>'
+    + SETUP_PAGE[_heading_end:_remote_start]
+    + "</details>"
+    + SETUP_PAGE[_remote_end:]
+)
+
+# Live plots: CAMELS sends the data of its open plot windows (only new points,
+# using a cursor) and the browser draws them with Plotly in the same style.
+# Works for direct API connections and for remote computers via the broker.
+DASHBOARD_PAGE += """<script>
+(() => {
+  const protocolSelect=document.getElementById('protocol');
+  if(!protocolSelect||document.getElementById('camels-live-plots'))return;
+  const section=document.createElement('section');
+  section.id='camels-live-plots';
+  section.innerHTML='<style>#camels-live-plots .lp-head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}#camels-live-plots h2{margin:.6rem 0}#camels-live-plots .lp-frame{width:100%;height:440px;margin:.5rem 0 1.5rem}</style>'+
+    '<div class="lp-head"><h2>Live plots</h2><small id="lp-status" class="hint">Choose a protocol.</small><button type="button" id="lp-close">Close plot windows in CAMELS</button></div><div id="lp-frames"></div>';
+  const anchor=document.getElementById('browser-plots')||document.getElementById('native-live-plots');
+  if(anchor)anchor.parentNode.insertBefore(section,anchor);else document.body.append(section);
+  const statusText=document.getElementById('lp-status'),frames=document.getElementById('lp-frames'),closeButton=document.getElementById('lp-close');
+  const plots=new Map();
+  let source='',loading=false,lastIdleRefresh=0,plotlyPromise=null;
+  function selectedProtocol(){
+    const name=protocolSelect.value;
+    return name&&!/^Loading|^No saved|^Could not load/.test(name)?name:'';
+  }
+  function ensurePlotly(){
+    if(window.Plotly)return Promise.resolve(window.Plotly);
+    if(!plotlyPromise)plotlyPromise=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src='https://cdn.plot.ly/plotly-2.35.2.min.js';
+      script.onload=()=>resolve(window.Plotly);
+      script.onerror=()=>{plotlyPromise=null;reject(new Error('Could not load Plotly.'))};
+      document.head.append(script);
+    });
+    return plotlyPromise;
+  }
+  function reset(){plots.clear();frames.innerHTML=''}
+  function cursor(){
+    const result={};
+    for(const [id,plot] of plots)result[id]={generation:plot.generation,since:plot.since,version:plot.version};
+    return result;
+  }
+  function merge(reply){
+    let plot=plots.get(reply.id);
+    if(!plot||reply.reset){plot={x:[],ys:{},fits:[]};plots.set(reply.id,plot)}
+    const before=plot.x.length;
+    plot.x=plot.x.concat(reply.x||[]);
+    for(const trace of reply.traces||[]){
+      const old=plot.ys[trace.name]||new Array(before).fill(null);
+      plot.ys[trace.name]=old.concat(trace.y||[]);
+    }
+    plot.traces=reply.traces||[];
+    if(reply.fits)plot.fits=reply.fits;
+    plot.meta=reply;
+    plot.generation=reply.generation;plot.since=reply.end;plot.version=reply.version;
+    plot.dirty=true;
+  }
+  function axis(title,log,color){
+    // pyqtgraph look: axis lines with outside ticks, no grid.
+    return {title:{text:title||''},type:log?'log':'linear',showgrid:false,zeroline:false,showline:true,linecolor:color,ticks:'outside',tickcolor:color,mirror:false};
+  }
+  function figure(plot){
+    const meta=plot.meta,fg=meta.foreground||'#000000',bg=meta.background||'#ffffff';
+    const type=plot.x.length>5000?'scattergl':'scatter';
+    // Plotly fails on fields that are present but undefined: copy only set ones.
+    function trace(base,style){
+      const result={...base,mode:style.mode||'markers',yaxis:style.axis==='y2'?'y2':'y'};
+      for(const key of ['line','marker','visible'])if(style[key]!==undefined&&style[key]!==null)result[key]=style[key];
+      return result;
+    }
+    const data=plot.traces.map(item=>trace({type,name:item.name,x:plot.x,y:plot.ys[item.name]},item));
+    for(const fit of plot.fits)data.push(trace({type:'scatter',name:fit.name,x:fit.x,y:fit.y},{mode:'lines',...fit}));
+    const hasY2=data.some(trace=>trace.yaxis==='y2');
+    const layout={title:{text:meta.title||''},paper_bgcolor:bg,plot_bgcolor:bg,font:{color:fg},
+      margin:{t:45,r:hasY2?70:20,b:55,l:70},xaxis:axis(meta.x_label,meta.x_log,fg),yaxis:axis(meta.y_label,meta.y_log,fg),
+      legend:{orientation:'h',y:-0.2},uirevision:plot.generation};
+    if(hasY2)layout.yaxis2={...axis(meta.y2_label,meta.y2_log,fg),overlaying:'y',side:'right'};
+    return {data,layout};
+  }
+  async function render(){
+    const dirty=[...plots.entries()].filter(([,plot])=>plot.dirty);
+    if(!dirty.length)return;
+    const Plotly=await ensurePlotly();
+    for(const [id,plot] of dirty){
+      const frameId='lp-'+id.replace(/[^a-zA-Z0-9_-]/g,'_');
+      let frame=document.getElementById(frameId);
+      if(!frame){frame=document.createElement('div');frame.id=frameId;frame.className='lp-frame';frames.append(frame)}
+      const {data,layout}=figure(plot);
+      Plotly.react(frame,data,layout,{responsive:true,displaylogo:false});
+      plot.dirty=false;
+    }
+  }
+  async function refresh(){
+    const name=selectedProtocol();
+    if(loading)return;
+    if(!name){statusText.textContent='Choose a protocol.';closeButton.disabled=true;reset();return}
+    // Poll every second while measuring, otherwise every five seconds.
+    const now=Date.now();
+    if(window.camelsMeasurementRunning!==true&&source===name&&now-lastIdleRefresh<5000)return;
+    lastIdleRefresh=now;
+    if(source!==name){reset();source=name}
+    loading=true;
+    try{
+      for(let round=0;round<20;round++){
+        const reply=await api('plot-caches?protocol_name='+encodeURIComponent(name)+'&cursor='+encodeURIComponent(JSON.stringify(cursor())));
+        if(source!==name)return;
+        const open=new Set((reply.plots||[]).map(plot=>plot.id));
+        for(const id of [...plots.keys()])if(!open.has(id)){
+          plots.delete(id);
+          const frame=document.getElementById('lp-'+id.replace(/[^a-zA-Z0-9_-]/g,'_'));
+          if(frame)frame.remove();
+        }
+        (reply.plots||[]).forEach(merge);
+        const count=Number(reply.open_plot_count||0);
+        statusText.textContent=count?count+' plot window(s) open in CAMELS.':'No plot window open in CAMELS.';
+        closeButton.disabled=count===0;
+        if(!(reply.plots||[]).some(plot=>plot.more))break;
+      }
+      await render();
+    }catch(error){
+      statusText.textContent='Could not load the plots: '+error.message;
+    }finally{loading=false}
+  }
+  closeButton.addEventListener('click',async()=>{
+    const name=selectedProtocol();
+    if(!name)return;
+    if(closeButton.dataset.confirming!=='true'){
+      closeButton.dataset.confirming='true';closeButton.textContent='Click again to close them';
+      setTimeout(()=>{closeButton.dataset.confirming='';closeButton.textContent='Close plot windows in CAMELS'},4000);
+      return;
+    }
+    closeButton.dataset.confirming='';closeButton.textContent='Close plot windows in CAMELS';
+    try{await api('plots/close?protocol_name='+encodeURIComponent(name),{method:'POST'});lastIdleRefresh=0;setTimeout(refresh,500)}
+    catch(error){statusText.textContent='Could not close the plots: '+error.message}
+  });
+  protocolSelect.addEventListener('change',()=>{lastIdleRefresh=0;refresh()});
+  document.addEventListener('camels-measurement-state',()=>{lastIdleRefresh=0;refresh()});
+  setInterval(refresh,1000);
+  setTimeout(refresh,600);
+})();
+</script>"""
+
 
 def create_app(
     *,
@@ -1063,6 +1400,10 @@ def create_app(
         }
 
     def current_connection(user_id: str, connection_id: str | None = None) -> tuple[str, str]:
+        if connection_id and connection_id.startswith(remote.CONNECTION_PREFIX):
+            device_id = connection_id[len(remote.CONNECTION_PREFIX):]
+            remote.owned_device(user_id, device_id)
+            return remote.connection(device_id, user_id)
         connections, active_connection_id = saved_connections(user_id)
         selected_id = connection_id or active_connection_id
         selected = connections.get(selected_id) if selected_id else None
@@ -1136,6 +1477,13 @@ def create_app(
         connections, _ = saved_connections(user_id)
         names: list[str] = []
         connection_ids: dict[str, str] = {}
+        # Remote computers connected through the broker come first: they need
+        # no API key and no open port on the lab computer.
+        for device_id, device_protocols in remote.protocol_catalog(user_id):
+            for discovered_name in device_protocols:
+                if discovered_name not in connection_ids:
+                    names.append(discovered_name)
+                    connection_ids[discovered_name] = remote.CONNECTION_PREFIX + device_id
         # The current setup stores one CAMELS connection which discovers every
         # exposed protocol.  Older bridge releases stored protocol-scoped
         # records as well.  Query current connections first so an obsolete
@@ -1173,7 +1521,10 @@ def create_app(
         _, connection_ids = protocol_catalog(user_id)
         connection_id = connection_ids.get(protocol_name)
         if not connection_id:
-            raise HTTPException(status_code=404, detail="No saved API key for this protocol.")
+            raise HTTPException(
+                status_code=404,
+                detail="This protocol is not available on a connected CAMELS computer.",
+            )
         return current_connection(user_id, connection_id)
 
     def request_camels(
@@ -1189,6 +1540,10 @@ def create_app(
                 raise HTTPException(status_code=500, detail="A user CAMELS connection is required.")
             connection = (default_url, "")
         base_url, key = connection
+        device_id = remote.device_id_of(base_url)
+        if device_id is not None:
+            # Through the broker; ``key`` holds the requesting user here.
+            return remote.call(device_id, method, path, payload, key or None)
         body = None if payload is None else json.dumps(payload).encode("utf-8")
         headers = {"Authorization": f"Bearer {key}"} if key else {}
         if body is not None:
@@ -1300,6 +1655,75 @@ def create_app(
         store_user_connections(user.user_id, {}, None)
         return connection_summary(user.user_id)
 
+    # ------------------------------------------------------------------
+    # Remote CAMELS computers (outbound connection through the broker)
+    # ------------------------------------------------------------------
+    broker_request = remote.broker_request
+    owned_device = remote.owned_device
+
+    def remote_address(request: Request) -> str:
+        # 1. Set by the administrator, 2. the host's network address detected
+        # by the start script, 3. the address this page was opened with.
+        configured = os.environ.get("CAMELS_REMOTE_PUBLIC_URL", "").strip()
+        if configured:
+            return configured.rstrip("/")
+        path = request.url.path
+        prefix = path.split("/camels/")[0] if "/camels/" in path else ""
+        host = os.environ.get("CAMELS_REMOTE_DETECTED_HOST", "").strip()
+        if not host:
+            host = request.headers.get("host", "localhost").split(":")[0]
+        return f"https://{host}{prefix}"
+
+    def device_view(state: dict[str, Any]) -> dict[str, Any]:
+        agent = state.get("agent") or {}
+        return {
+            "device_id": state.get("device_id"),
+            "name": state.get("name"),
+            "paired": bool(state.get("paired")),
+            "online": bool(state.get("online")),
+            "hostname": state.get("hostname") or agent.get("hostname"),
+            "camels_version": agent.get("camels_version"),
+            "last_seen": state.get("last_seen"),
+        }
+
+    @app.get("/settings/remote-devices")
+    def list_remote_devices(request: Request, user=Depends(write_user)):
+        data = broker_request("GET", f"/devices?owner={quote(user.user_id, safe='')}")
+        return {
+            "oasis_address": remote_address(request),
+            "devices": [device_view(state) for state in data.get("devices", [])],
+        }
+
+    @app.post("/settings/remote-devices")
+    def add_remote_device(body: RemoteDeviceCreate, request: Request, user=Depends(write_user)):
+        created = broker_request("POST", "/devices", {"name": body.name.strip(), "owner": user.user_id})
+        return {
+            **device_view(created),
+            "pairing_code": created["pairing_code"],
+            "pairing_code_expires_at": created["pairing_code_expires_at"],
+            "oasis_address": remote_address(request),
+        }
+
+    @app.post("/settings/remote-devices/{device_id}/pairing-code")
+    def new_remote_pairing_code(device_id: str, request: Request, user=Depends(write_user)):
+        owned_device(user.user_id, device_id)
+        created = broker_request("POST", f"/devices/{quote(device_id, safe='')}/pairing-code")
+        return {**created, "oasis_address": remote_address(request)}
+
+    @app.post("/settings/remote-devices/{device_id}/delete")
+    def delete_remote_device(device_id: str, user=Depends(write_user)):
+        owned_device(user.user_id, device_id)
+        return broker_request("DELETE", f"/devices/{quote(device_id, safe='')}")
+
+    @app.post("/settings/remote-devices/{device_id}/test")
+    def test_remote_device(device_id: str, user=Depends(write_user)):
+        owned_device(user.user_id, device_id)
+        return broker_request(
+            "POST",
+            f"/devices/{quote(device_id, safe='')}/commands",
+            {"operation": "list_protocols", "requested_by": user.user_id, "timeout_seconds": 10},
+        )
+
     @app.get("/dashboard", response_class=HTMLResponse)
     def dashboard_page(_user=Depends(read_user)):
         return DASHBOARD_PAGE
@@ -1373,15 +1797,19 @@ def create_app(
         # Check the protocol/key mapping before scheduling the asynchronous
         # workflow, so invalid dashboard requests fail immediately.
         connection_for_protocol(user.user_id, request.protocol_name)
+        # The run id is fixed here, so a retried start command of the
+        # workflow is recognised by CAMELS and starts nothing twice.
+        run_id = str(uuid.uuid4())
         workflow_id = start_action(
             action_id="nomad_camels_oasis.entry_points:camels_measurement_action",
             data=CAMELSMeasurementInput(
                 user_id=user.user_id,
                 protocol_name=request.protocol_name,
                 variables=request.variables,
+                run_id=run_id,
             ),
         )
-        return {"workflow_id": workflow_id, "status": "PENDING"}
+        return {"workflow_id": workflow_id, "status": "PENDING", "run_id": run_id}
 
     @app.get("/dashboard/actions/{workflow_id}")
     def dashboard_action_status(workflow_id: str, user=Depends(read_user)):
@@ -1409,11 +1837,27 @@ def create_app(
         )
 
     @app.get("/dashboard/plot-caches")
-    def dashboard_plot_caches(protocol_name: str, user=Depends(read_user)):
-        """Proxy only Qt-independent 1D plot caches from CAMELS."""
+    def dashboard_plot_caches(protocol_name: str, cursor: str | None = None, user=Depends(read_user)):
+        """Proxy only Qt-independent 1D plot caches from CAMELS.
+
+        ``cursor`` (JSON) is the browser's position in each plot; then only
+        new points are transferred.
+        """
+        path = "/api/v1/gui/plot-caches"
+        if cursor:
+            path += "?cursor=" + quote(cursor, safe="")
         return request_camels(
             "GET",
-            "/api/v1/gui/plot-caches",
+            path,
+            connection=connection_for_protocol(user.user_id, protocol_name),
+        )
+
+    @app.post("/dashboard/stop")
+    def dashboard_stop_measurement(protocol_name: str, user=Depends(write_user)):
+        """Stop the running measurement on the CAMELS computer of a protocol."""
+        return request_camels(
+            "POST",
+            "/api/v1/actions/stop",
             connection=connection_for_protocol(user.user_id, protocol_name),
         )
 
@@ -1439,6 +1883,11 @@ def create_app(
     ):
         """Serve a CAMELS localhost Dash plot through two authenticated proxies."""
         base_url, api_key = connection_for_protocol(user.user_id, protocol_name)
+        if remote.device_id_of(base_url) is not None:
+            raise HTTPException(
+                status_code=501,
+                detail="Browser plots are not available for remote computers; use Live plots.",
+            )
         remote_path = (
             f"/api/v1/gui/browser-plots/{quote(protocol_name, safe='')}/"
             f"{port}/{plot_path.lstrip('/')}"

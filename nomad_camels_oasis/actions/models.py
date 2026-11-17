@@ -10,3 +10,6 @@ class CAMELSMeasurementInput(BaseModel):
     upload_id: str | None = None
     protocol_name: str = Field(min_length=1)
     variables: dict[str, Any] = Field(default_factory=dict)
+    # Chosen by OASIS before the start, so that a retried start is
+    # recognised by CAMELS (remote computers) instead of starting twice.
+    run_id: str | None = None

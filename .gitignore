@@ -174,3 +174,6 @@ tls/
 # It remains an independent Git repository and must not be added as 1,000+ files
 # to this OASIS distribution repository.
 /nomad-gui/
+
+# Local override with HTTPS certificates for CAMELS remote control
+docker-compose.override.yaml

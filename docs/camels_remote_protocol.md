@@ -149,46 +149,54 @@ The agent answers an unknown `operation` with `rejected`.
 ## 5. Operations
 
 This whitelist is complete: the agent has no generic forwarding operation. The
-agent lists the operations it supports in `hello`. P1 supports the read-only
-operations; `save_parameters`, `start_protocol`, `stop_protocol`, `clear_plot` and
-`close_plots` follow with their safeguards.
-`{protocol}` is URL-encoded. Paths start with `/api/v1`.
+agent lists the operations it supports in `hello`. `{protocol}` is URL-encoded.
+Paths start with `/api/v1`. Payload fields not listed are ignored.
 
-| Operation | Current CAMELS route | Result |
+| Operation | Payload | CAMELS route | Changes state |
+|---|---|---|---|
+| `get_service_info` | | `GET /info` | |
+| `list_protocols` | | `GET /protocols` | |
+| `get_protocol_schema` | `protocol` | `GET /protocols/{protocol}/schema` | |
+| `get_protocol_definition` | `protocol` | `GET /protocols/{protocol}/JSON` | |
+| `get_run_status` | `run_id` | `GET /protocols/results/{run_id}` | |
+| `get_measurement_status` | | `GET /gui/measurement-status` | |
+| `get_plot_count` | | `GET /gui/plots` | |
+| `get_plot_data` | `cursor` (object, optional) | `GET /gui/plot-caches?cursor=` | |
+| `get_pid_plots` | `protocol` | `GET /gui/pid-plots?protocol_name=` | |
+| `save_protocol_parameters` | `protocol`, `variables` | `POST /protocols/{protocol}/parameters` | yes |
+| `start_measurement` | `protocol`, `variables`, `run_id` | `POST /actions/run/protocols/{protocol}?protocol_uuid={run_id}` | yes |
+| `stop_measurement` | | `POST /actions/stop` | yes |
+| `close_plots` | | `POST /gui/plots/close` | yes |
+
+Operations that change state are refused with `paused` while remote control is
+paused on the lab computer (**Tools > OASIS Remote Control...**). Reading stays
+possible, so OASIS can still watch the measurement.
+
+Error codes. The message is CAMELS' own reason where it has one, for example
+`Unknown protocol variables: x`.
+
+| Code | Source | HTTP status in OASIS |
 |---|---|---|
-| `get_service_info` | `GET /info` | `completed` |
-| `list_protocols` | `GET /protocols` | `completed` |
-| `get_protocol_schema` | `GET /protocols/{protocol}/schema` | `completed` |
-| `get_protocol_definition` | `GET /protocols/{protocol}/JSON` | `completed` |
-| `save_parameters` | `POST /protocols/{protocol}/parameters` | `completed` |
-| `start_protocol` | `POST /actions/run/protocols/{protocol}?protocol_uuid={run_id}` | `accepted` |
-| `stop_protocol` | New route required | `accepted` |
-| `get_run_status` | `GET /protocols/results/{run_id}` | `completed` |
-| `get_measurement_status` | `GET /gui/measurement-status` | `completed` |
-| `clear_plot` | `POST /gui/browser-plots/{protocol}/{port}/clear_data` | `completed` |
-| `close_plots` | `POST /gui/plots/close` | `completed` |
-
-Error codes:
-
-| Code | Source |
-|---|---|
-| `device_offline` | Broker: no active connection (`rejected`), or it was lost while waiting (`unknown`) |
-| `timeout` | Broker: no answer before the deadline (`unknown`) |
-| `unknown_operation` | Agent: not in the whitelist |
-| `not_found` | Route returned 404, including protocols that are not exposed |
-| `invalid_parameters` | Route returned 400 or 422 |
-| `busy` | Route returned 409: a measurement is running |
-| `internal` | Other failures. The message contains no secrets or stack traces |
+| `device_offline` | Broker: no active connection (`rejected`), or it was lost while waiting (`unknown`) | 503 |
+| `timeout` | Broker: no answer before the deadline (`unknown`) | 504 |
+| `unknown_operation` | Agent: not in the whitelist, for example an older CAMELS | 501 |
+| `not_found` | Route returned 404, including protocols that are not exposed | 404 |
+| `invalid_parameters` | Route returned 400 or 422 | 400 |
+| `busy` | Route returned 409: a measurement is running | 409 |
+| `paused` | Agent: remote control is paused on the lab computer | 423 |
+| `internal` | Other failures. The message contains no secrets or stack traces | 502 |
 
 ## 6. Delivery rules
 
 These rules prevent a retry from starting a second measurement.
 
-1. **OASIS creates `run_id`.** The value is a UUID created before the first attempt
-   and reused for every retry of that start. For Temporal, this means generating it
-   in the workflow and passing it to the activity.
-2. **CAMELS deduplicates `run_id`.** A known `run_id` returns its existing state and
-   never starts another measurement.
+1. **OASIS creates `run_id`.** The dashboard creates the UUID when it starts the
+   Action and passes it in `CAMELSMeasurementInput`, so every retry of the start
+   activity uses the same value.
+2. **CAMELS deduplicates `run_id`.** The agent remembers the last 200 started
+   `run_id`s; a known one returns the earlier result with `"duplicate": true` and
+   starts nothing. Starts are handled one at a time. CAMELS also refuses a start
+   with `busy` while a measurement is being prepared, running or paused.
 3. **The broker does not queue commands.** An offline device gets `device_offline`
    immediately, and a reconnection does not replay anything.
 4. **The broker enforces the deadline.** Each internal request has a deadline, by
@@ -219,31 +227,39 @@ state; if the run ended while offline, the agent also sends its final `status`.
 
 ## 8. Live plots
 
-The broker subscribes only while a browser is viewing the measurement. A subscription
-applies to the current connection, so the broker sends it again after reconnection.
+CAMELS sends data, not images. Every open 1D plot window keeps a thread-safe
+copy of its points and appearance (`nomad_camels/main_classes/remote_plot_cache.py`).
+The browser polls `get_plot_data` (every second while measuring, otherwise every
+five seconds) with a cursor, and receives only points it does not have yet:
 
 ```json
-{"type": "plot_subscribe", "run_id": "0d3f...", "interval_ms": 1500, "max_points": 2000}
+{"cursor": {"140221": {"generation": "a1b2c3d4-0", "since": 120, "version": 3}}}
 ```
 
 ```json
-{"type": "plot_snapshot", "run_id": "0d3f...", "plot_id": "browser-8050", "kind": "browser",
- "sequence": 42, "final": false,
- "data": {"V": [0.1, 0.2], "I": [0.002, 0.004],
-          "fit_1": {"fit_result": [0.0021, 0.0039], "fit_params": {}, "y_axis_name": "I"}}}
+{"open_plot_count": 1, "plots": [{
+  "id": "140221", "generation": "a1b2c3d4-0", "version": 3,
+  "reset": false, "start": 120, "end": 124, "more": false,
+  "title": "IV", "x_label": "U", "y_label": "I", "y2_label": "",
+  "x_log": false, "y_log": false, "y2_log": false,
+  "background": "#ffffff", "foreground": "#000000",
+  "x": [1.2, 1.3, 1.4, 1.5],
+  "traces": [{"name": "I", "axis": "y", "y": [0.1, 0.2, 0.3, 0.4], "mode": "markers",
+              "marker": {"symbol": "circle", "size": 10, "color": "#1f77b4"}}],
+  "fits": [{"name": "fit_I", "axis": "y", "x": [], "y": [], "mode": "lines", "line": {}}]}]}
 ```
 
-- `data` for `browser` plots is the unchanged response of the Dash `/data?max_points=N`
-  endpoint, so the existing OASIS Plotly code keeps working.
-- `kind` is `browser`, `qt` or `pid`. These come from `/data`, `/gui/plot-caches` and
-  `/gui/pid-plots`.
-- Each snapshot replaces the previous one for that `plot_id`. `sequence` increases
-  for each plot and is used to discard older snapshots.
-- Latest wins: the agent keeps at most one unsent snapshot per plot and never lets
-  plot data delay a `command_result`.
-- `final: true` is the last snapshot of a run. The broker keeps it after the run ends.
-  This replaces the 30-second refresh period, after CAMELS has flushed the plot.
-- Snapshots are for display only. The complete data stays in CAMELS and NOMAD.
+- `generation` changes when the plot is cleared, and differs between plot windows.
+  With an outdated generation or a position that is no longer kept (finite number
+  of points in CAMELS), `reset` is true and the plot starts from its first point.
+- A reply holds at most 20000 numbers for all plots together; `more` asks the
+  client to request again at once. A reply stays far below the 1 MiB limit.
+- `traces` carry the curve styles read from pyqtgraph (color, symbol, line style,
+  visibility) as Plotly fields, so OASIS draws the plot like CAMELS. `fits` are
+  sent only when `version` changed.
+- Plot data is for display only. The complete data stays in CAMELS and NOMAD.
+- The Dash browser plots (`/gui/browser-plots/...`) are not available for remote
+  computers.
 
 ## 9. Internal broker API
 
@@ -273,33 +289,29 @@ browser tab stops the data flow.
 - Only protocols marked with `oasis_remote_control` are visible or can be started.
 - Remote use of OASIS never replaces local instrument limits or emergency stops.
 
-## 11. Changes required in the current code
+## 11. Implementation status
 
-### CAMELS
+Done:
 
-- Add the agent, remote-mode settings and pairing to the settings window.
-- Start uvicorn only when local API access is wanted, and bind it to `127.0.0.1`
-  in remote mode. It currently binds to `0.0.0.0` (`api/api.py`, `start_server`).
-- Add a stop route that calls `stop_protocol` through a Qt signal.
-- Return 409 when a measurement is running, and deduplicate `protocol_uuid`.
-- Report failures after `start_protocol_signal`, because `run_protocol` can return
-  early when `build_protocol` fails.
-- Add `run_id` to the measurement status snapshot.
-- Replace the blocking `urlopen` in the plot proxy with `asyncio.to_thread`, so it
-  cannot block heartbeats.
-- Add `websockets` to the `api` dependencies.
+- CAMELS: agent, pairing dialog with pause switch, stop route, `busy` (409) for a
+  second start, `run_id` deduplication in the agent, plot data copies with cursor
+  and appearance, `websockets` in the `api` dependencies.
+- OASIS: broker service with Nginx location, device pairing on the setup page,
+  `request_camels` and both Temporal activities through the broker
+  (`nomad_camels_oasis/remote.py`), `run_id` created before the start, Live plots
+  section, stop button.
 
-### OASIS
+Open:
 
-- Add the broker service, its Nginx WebSocket location and device storage.
-- Send `request_camels` and both Temporal activities through the internal broker API.
-- Create `run_id` in the workflow, and pass it through every activity retry.
-- Replace API-key connections in the setup page with device pairing.
-- After the plot migration, remove the Dash HTML rewriting and iframe code.
+- The pushed `status` messages of section 7; OASIS currently polls
+  `get_measurement_status`.
+- Bind the local CAMELS API server to `127.0.0.1` when only remote control is used.
+- Remove the Dash iframe code once no direct API connections are used.
 
-## 12. Open questions
+## 12. Decisions
 
-1. Can users other than the one who started a measurement stop it? A safe default is
-   that every user with access to the device can.
-2. Should an operator at the lab computer be able to block remote starts temporarily?
-3. Does `stop_protocol` need a confirmation step for particular instruments?
+1. Only the owner of a computer (the OASIS user who added it) can see it, read its
+   protocols and plots, start, stop or change parameters. Other users get 404.
+2. Staff at the lab computer can pause remote control in CAMELS; OASIS can then
+   only watch (`paused`).
+3. Starting and stopping need a second click in the dashboard.

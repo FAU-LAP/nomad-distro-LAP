@@ -8,6 +8,7 @@ from typing import Any
 import requests
 from temporalio import activity
 
+from nomad_camels_oasis import remote
 from nomad_camels_oasis.app import CredentialStore
 from nomad_camels_oasis.actions.models import CAMELSMeasurementInput
 
@@ -48,10 +49,19 @@ def _connection_for_protocol(user_id: str, protocol_name: str) -> tuple[str, str
 
 @activity.defn
 def start_camels_run(data: CAMELSMeasurementInput) -> dict[str, Any]:
+    device_id = remote.device_for_protocol(data.user_id, data.protocol_name)
+    if device_id is not None:
+        # Remote computer: the fixed run_id makes a retried start harmless.
+        payload = {"protocol": data.protocol_name, "variables": data.variables}
+        if data.run_id:
+            payload["run_id"] = data.run_id
+        return remote.command(device_id, "start_measurement", payload, requested_by=data.user_id)
     base_url, api_key = _connection_for_protocol(data.user_id, data.protocol_name)
+    params = {"protocol_uuid": data.run_id} if data.run_id else None
     response = requests.post(
         f"{base_url}/api/v1/actions/run/protocols/{data.protocol_name}",
         headers={"Authorization": f"Bearer {api_key}"},
+        params=params,
         json={"variables": data.variables},
         timeout=20,
     )
@@ -61,6 +71,11 @@ def start_camels_run(data: CAMELSMeasurementInput) -> dict[str, Any]:
 
 @activity.defn
 def get_camels_run_status(data: dict[str, str]) -> dict[str, Any]:
+    device_id = remote.device_for_protocol(data["user_id"], data["protocol_name"])
+    if device_id is not None:
+        return remote.command(
+            device_id, "get_run_status", {"run_id": data["run_id"]}, requested_by=data["user_id"]
+        )
     base_url, api_key = _connection_for_protocol(data["user_id"], data["protocol_name"])
     response = requests.get(
         f"{base_url}/api/v1/protocols/results/{data['run_id']}",
