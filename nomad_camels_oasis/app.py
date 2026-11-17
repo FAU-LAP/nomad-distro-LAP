@@ -517,10 +517,27 @@ DASHBOARD_PAGE += """<script>
   const measurementHint=document.querySelector('p.hint');
   const runTitle=document.getElementById('status').previousElementSibling;
   loadButton.style.display='none';
-  parameterTitle.style.display='none';
-  document.getElementById('parameters').style.display='none';
-  measurementHint.style.display='none';
+  // The parameters are shown and editable; Start measurement uses them for
+  // the next run. They can also be saved as the defaults of the protocol.
   document.getElementById('run').style.display='none';
+  const saveDefaults=document.createElement('button');
+  saveDefaults.type='button';
+  saveDefaults.id='dashboard-save-parameters';
+  saveDefaults.textContent='Save as defaults in CAMELS';
+  const saveMessage=document.createElement('small');
+  saveMessage.className='hint';
+  saveMessage.style.marginLeft='.5rem';
+  document.getElementById('parameters').after(saveDefaults,saveMessage);
+  saveDefaults.addEventListener('click',async()=>{
+    const name=protocol.value;
+    if(!name||/^Loading|^No saved|^Could not load/.test(name))return;
+    saveDefaults.disabled=true;saveMessage.textContent='Saving...';
+    try{
+      await api('protocols/'+encodeURIComponent(name)+'/parameters',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({variables:variables()})});
+      saveMessage.textContent='Saved in CAMELS as the new defaults of '+name+'.';
+    }catch(error){saveMessage.textContent='Could not save: '+error.message}
+    finally{saveDefaults.disabled=false}
+  });
   runTitle.style.display='none';
   document.getElementById('status').style.display='none';
 
@@ -745,8 +762,16 @@ DASHBOARD_PAGE += """<script>
   let actionTimer=null;
   let actionPending=false;
   let measurementRunning=false;
+  let remotePaused=false;
   function updateStartAvailability(){
-    startButton.disabled=actionPending || measurementRunning;
+    startButton.disabled=actionPending || measurementRunning || remotePaused;
+    if(remotePaused && !actionPending){
+      startButton.textContent='Remote control paused';
+      startButton.title='Remote control is paused in CAMELS on the lab computer (Tools > OASIS Remote Control...).';
+      stopButton.disabled=true;
+      return;
+    }
+    startButton.title='';
     if(startButton.dataset.confirming==='true')startButton.textContent='Click again to start';
     else if(measurementRunning && !actionPending)startButton.textContent='Measurement running';
     else if(!actionPending)startButton.textContent='Start measurement';
@@ -788,6 +813,7 @@ DASHBOARD_PAGE += """<script>
       const normalized=status.toLowerCase();
       const wasMeasurementRunning=window.camelsMeasurementRunning===true;
       measurementRunning=['running','preparing','queued'].some(word=>normalized.includes(word));
+      remotePaused=data.remote_control_paused===true;
       window.camelsMeasurementRunning=measurementRunning;
       // Start snapshot polling immediately when CAMELS enters a run and stop
       // it as soon as the run reaches a terminal state. The final rendered
@@ -796,9 +822,9 @@ DASHBOARD_PAGE += """<script>
         document.dispatchEvent(new Event('camels-measurement-state'));
       }
       const activeProtocol=data.protocol_name ? String(data.protocol_name) : '';
-      text.textContent=measurementRunning && activeProtocol
+      text.textContent=(measurementRunning && activeProtocol
         ? status+' - currently running: '+activeProtocol
-        : status;
+        : status)+(remotePaused?' | Remote control paused on the lab computer':'');
       bar.style.width=progress.toFixed(1)+'%';
       updateStartAvailability();
       detail.textContent=progress.toFixed(0)+'% | '+duration(data.elapsed_seconds)+' elapsed | '+(status==='Finished' ? 'finished' : duration(data.remaining_seconds)+' remaining');
@@ -814,6 +840,7 @@ DASHBOARD_PAGE += """<script>
       const actionStatus=String(result.status||'PENDING').toUpperCase();
       startButton.textContent='Action: '+actionStatus;
       if(['COMPLETED','FAILED','CANCELLED','TERMINATED','TIMED_OUT'].includes(actionStatus)){
+        if(actionStatus!=='COMPLETED')detail.textContent='The measurement Action ended with '+actionStatus+'. Check CAMELS on the lab computer.';
         actionPending=false;
         updateStartAvailability();
       }else actionTimer=setTimeout(()=>pollDashboardAction(workflowId),1500);
@@ -1801,7 +1828,16 @@ def create_app(
 
         # Check the protocol/key mapping before scheduling the asynchronous
         # workflow, so invalid dashboard requests fail immediately.
-        connection_for_protocol(user.user_id, request.protocol_name)
+        connection = connection_for_protocol(user.user_id, request.protocol_name)
+        # Give the reason at once instead of a failed Action.
+        try:
+            state = request_camels("GET", "/api/v1/gui/measurement-status", connection=connection)
+        except HTTPException:
+            state = {}
+        if state.get("remote_control_paused") is True:
+            raise HTTPException(423, "Remote control is paused in CAMELS on the lab computer.")
+        if str(state.get("status", "")).lower() in ("preparing", "running"):
+            raise HTTPException(409, "Another measurement is running in CAMELS.")
         # The run id is fixed here, so a retried start command of the
         # workflow is recognised by CAMELS and starts nothing twice.
         run_id = str(uuid.uuid4())
