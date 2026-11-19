@@ -50,7 +50,13 @@ def main() -> None:
     host = detect_host_address()
     if host:
         environment["CAMELS_REMOTE_DETECTED_HOST"] = host
+    # The broker has its own image; build it too, so code changes take effect.
+    subprocess.run(["docker", "compose", "build", "camels_broker"], cwd=ROOT, env=environment, check=True)
     subprocess.run(["docker", "compose", "up", "-d"], cwd=ROOT, env=environment, check=True)
+    # Nginx resolves container addresses only at start. A recreated container
+    # (for example the broker) gets a new address, so reload Nginx; otherwise
+    # it answers 502 for the old address.
+    subprocess.run(["docker", "compose", "exec", "-T", "proxy", "nginx", "-s", "reload"], cwd=ROOT, env=environment, check=False)
     print("\nReady:")
     print("  CAMELS setup: http://localhost/nomad-oasis/camels/setup")
     print("  GUI v2:       http://localhost/nomad-oasis/gui/v2/")
