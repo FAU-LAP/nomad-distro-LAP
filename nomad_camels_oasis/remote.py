@@ -56,6 +56,8 @@ ROUTES: list[tuple[str, re.Pattern, str, dict[str, str], tuple[str, ...]]] = [
     ("GET", re.compile(r"^/api/v1/gui/plots$"), "get_plot_count", {}, ()),
     ("GET", re.compile(r"^/api/v1/gui/plot-caches$"), "get_plot_data", {"cursor": "cursor"}, ()),
     ("POST", re.compile(r"^/api/v1/gui/plots/close$"), "close_plots", {}, ()),
+    ("POST", re.compile(r"^/api/v1/gui/plots/(?P<plot_id>[^/]+)/close$"), "close_plot", {}, ()),
+    ("GET", re.compile(r"^/api/v1/gui/live$"), "get_live_update", {"cursor": "cursor"}, ()),
     ("GET", re.compile(r"^/api/v1/gui/pid-plots$"), "get_pid_plots", {"protocol_name": "protocol"}, ()),
 ]
 
@@ -109,6 +111,17 @@ def broker_request(method: str, path: str, payload: dict[str, Any] | None = None
         raise HTTPException(502, f"The CAMELS broker answered HTTP {exc.code}.") from exc
     except (URLError, TimeoutError) as exc:
         raise HTTPException(503, "The CAMELS broker is not running.") from exc
+
+
+def wait_changes(device_id: str, after: int | None, timeout: float) -> dict[str, Any]:
+    """Wait until the computer reports a change (see the broker's /changes).
+
+    Returns ``{"seq", "online", "push"}``.
+    """
+    query = f"timeout={timeout:g}" + ("" if after is None else f"&after={int(after)}")
+    return broker_request(
+        "GET", f"/devices/{quote(device_id, safe='')}/changes?{query}", timeout=timeout + 10
+    )
 
 
 def owned_device(user_id: str, device_id: str) -> dict[str, Any]:

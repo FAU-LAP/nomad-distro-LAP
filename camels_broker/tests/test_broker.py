@@ -182,3 +182,50 @@ def test_pairing_again_revokes_old_token(client):
     with pytest.raises(WebSocketDisconnect):
         with connect(client, device["device_token"]):
             pass
+
+
+def test_changes_long_poll(client):
+    device = paired_device(client)
+    device_id = device["device_id"]
+    changes = f"/devices/{device_id}/changes"
+    with connect(client, device["device_token"]) as ws:
+        ws.send_text(json.dumps({"version": 1, "type": "hello", "id": "h1", "hostname": "lab-pc",
+                                 "camels_version": "test", "operations": [], "features": ["changes"]}))
+        assert ws.receive_json()["type"] == "welcome"
+        first = internal(client, "GET", changes + "?timeout=0").json()
+        assert first["online"] is True and first["push"] is True
+
+        # Nothing changes: the request waits for the timeout.
+        start = time.monotonic()
+        same = internal(client, "GET", changes + f"?after={first['seq']}&timeout=0.5").json()
+        assert same["seq"] == first["seq"] and time.monotonic() - start >= 0.45
+
+        # A change reported by the agent ends the wait at once.
+        result = {}
+
+        def wait():
+            start = time.monotonic()
+            result.update(internal(client, "GET", changes + f"?after={first['seq']}&timeout=10").json())
+            result["seconds"] = time.monotonic() - start
+
+        thread = threading.Thread(target=wait)
+        thread.start()
+        time.sleep(0.3)
+        ws.send_text(json.dumps({"version": 1, "type": "changed", "id": "c1"}))
+        thread.join(5)
+        assert result["seq"] == first["seq"] + 1 and result["seconds"] < 2
+
+    # Disconnecting is a change, too; an offline device does not make callers wait.
+    time.sleep(0.2)
+    start = time.monotonic()
+    offline = internal(client, "GET", changes + f"?after={result['seq'] + 1}&timeout=10").json()
+    assert offline["online"] is False and offline["push"] is False and time.monotonic() - start < 1
+
+
+def test_changes_without_push_feature_do_not_wait(client):
+    device = paired_device(client)
+    with connect(client, device["device_token"]) as ws:
+        hello(ws)
+        start = time.monotonic()
+        reply = internal(client, "GET", f"/devices/{device['device_id']}/changes?after=0&timeout=10").json()
+        assert reply["push"] is False and time.monotonic() - start < 1

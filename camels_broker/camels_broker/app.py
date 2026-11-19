@@ -35,6 +35,8 @@ SUBPROTOCOL = "camels-remote.v1"
 PROTOCOL_VERSION = 1
 MAX_MESSAGE_BYTES = 1024 * 1024
 HELLO_TIMEOUT_SECONDS = 10
+# Longest wait of one /changes request.
+MAX_CHANGE_WAIT_SECONDS = 30
 
 CLOSE_REVOKED = 4401
 CLOSE_REPLACED = 4409
@@ -102,6 +104,30 @@ class Hub:
     def __init__(self) -> None:
         self.connections: dict[str, Connection] = {}
         self.last_status: dict[str, dict] = {}
+        # Per device: number of changes reported by the agent (and of
+        # connects/disconnects), and an event set on the next change.
+        self.change_seq: dict[str, int] = {}
+        self.change_events: dict[str, asyncio.Event] = {}
+
+    def notify_change(self, device_id: str) -> None:
+        self.change_seq[device_id] = self.change_seq.get(device_id, 0) + 1
+        event = self.change_events.pop(device_id, None)
+        if event is not None:
+            event.set()
+
+    async def wait_change(self, device_id: str, after: int | None, timeout: float) -> int:
+        """Return the change number once it differs from ``after``.
+
+        Returns at once if it differs already (or ``after`` is None), else
+        after the next change or ``timeout`` seconds.
+        """
+        current = self.change_seq.get(device_id, 0)
+        if after is None or after != current or timeout <= 0:
+            return current
+        event = self.change_events.setdefault(device_id, asyncio.Event())
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(event.wait(), timeout)
+        return self.change_seq.get(device_id, 0)
 
     def get(self, device_id: str) -> Connection | None:
         conn = self.connections.get(device_id)
@@ -114,11 +140,13 @@ class Hub:
             log.info("device %s: newer connection replaces session %s", conn.device_id, old.session_id)
             self._fail_pending(old, "device_offline", "The connection was replaced.")
             await old.close(CLOSE_REPLACED, "replaced by a newer connection")
+        self.notify_change(conn.device_id)
 
     def unregister(self, conn: Connection) -> None:
         conn.closed = True
         if self.connections.get(conn.device_id) is conn:
             del self.connections[conn.device_id]
+            self.notify_change(conn.device_id)
         self._fail_pending(conn, "device_offline", "The connection was lost.")
 
     async def disconnect(self, device_id: str, code: int, reason: str) -> None:
@@ -280,7 +308,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return
         conn.hello = {
             key: hello.get(key)
-            for key in ("camels_version", "hostname", "operations", "measurement")
+            for key in ("camels_version", "hostname", "operations", "features", "measurement")
         }
         if hello.get("measurement"):
             hub.last_status[device.device_id] = hello["measurement"]
@@ -313,6 +341,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     if key in message:
                         result[key] = message[key]
                 future.set_result(result)
+        elif kind == "changed":
+            # Plots or status changed in CAMELS; wake up waiting dashboards.
+            hub.notify_change(conn.device_id)
         elif kind == "status":
             status = {k: v for k, v in message.items() if k not in ("version", "type", "id")}
             conn.status = status
@@ -377,6 +408,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @internal.get("/devices/{device_id}/state")
     async def get_state(device_id: str):
         return device_state(device_or_404(device_id))
+
+    @internal.get("/devices/{device_id}/changes")
+    async def wait_changes(device_id: str, after: int | None = None, timeout: float = 20):
+        """Long poll: answers when the device reported a change after
+        ``after`` (the ``seq`` of the previous answer), or after ``timeout``.
+
+        ``push`` tells whether the connected agent reports changes at all;
+        if not, the caller has to poll.
+        """
+        device_or_404(device_id)
+        conn = hub.get(device_id)
+        push = conn is not None and "changes" in (conn.hello.get("features") or [])
+        # An agent that reports no changes would only make the caller wait.
+        wait = max(0.0, min(timeout, MAX_CHANGE_WAIT_SECONDS)) if push else 0.0
+        seq = await hub.wait_change(device_id, after, wait)
+        conn = hub.get(device_id)
+        return {"seq": seq, "online": conn is not None, "push": push}
 
     @internal.post("/devices/{device_id}/commands")
     async def send_command(device_id: str, body: CommandRequest):

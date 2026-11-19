@@ -803,11 +803,7 @@ DASHBOARD_PAGE += """<script>
     const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;
     return h ? String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0') : String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   }
-  async function refreshMeasurementProgress(){
-    const selected=protocolSelect.value;
-    if(!selected || /^Loading|^No saved|^Could not load/.test(selected))return;
-    try{
-      const data=await api('measurement-status?protocol_name='+encodeURIComponent(selected));
+  function applyMeasurementStatus(data){
       const status=String(data.status||'Idle');
       const progress=Math.max(0,Math.min(100,Number(data.progress)||0));
       const normalized=status.toLowerCase();
@@ -828,6 +824,15 @@ DASHBOARD_PAGE += """<script>
       bar.style.width=progress.toFixed(1)+'%';
       updateStartAvailability();
       detail.textContent=progress.toFixed(0)+'% | '+duration(data.elapsed_seconds)+' elapsed | '+(status==='Finished' ? 'finished' : duration(data.remaining_seconds)+' remaining');
+  }
+  document.addEventListener('camels-live-status',event=>applyMeasurementStatus(event.detail||{}));
+  async function refreshMeasurementProgress(){
+    const selected=protocolSelect.value;
+    if(!selected || /^Loading|^No saved|^Could not load/.test(selected))return;
+    // The live loop delivers the status as soon as it changes.
+    if(window.camelsLive&&window.camelsLive.ok&&window.camelsLive.protocol===selected)return;
+    try{
+      applyMeasurementStatus(await api('measurement-status?protocol_name='+encodeURIComponent(selected)));
     }catch(error){
       text.textContent='Status unavailable';
       detail.textContent=String(error.message||error);
@@ -1194,20 +1199,43 @@ SETUP_PAGE = (
 
 # Live plots: CAMELS sends the data of its open plot windows (only new points,
 # using a cursor) and the browser draws them with Plotly in the same style.
-# Works for direct API connections and for remote computers via the broker.
+# /dashboard/live waits until CAMELS reports a change (remote computers), so
+# new points appear at once; direct API connections are polled.
+# Each plot shows the run it belongs to (protocol, times, parameters, state)
+# and can be closed on its own.
 DASHBOARD_PAGE += """<script>
 (() => {
   const protocolSelect=document.getElementById('protocol');
   if(!protocolSelect||document.getElementById('camels-live-plots'))return;
+  // Older panels polled on their own; the live loop replaces them.
+  try{clearInterval(nativePlotWindowInterval)}catch(error){}
   const section=document.createElement('section');
   section.id='camels-live-plots';
-  section.innerHTML='<style>#camels-live-plots .lp-head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}#camels-live-plots h2{margin:.6rem 0}#camels-live-plots .lp-frame{width:100%;height:440px;margin:.5rem 0 1.5rem}</style>'+
-    '<div class="lp-head"><h2>Live plots</h2><small id="lp-status" class="hint">Choose a protocol.</small><button type="button" id="lp-close">Close plot windows in CAMELS</button></div><div id="lp-frames"></div>';
+  section.innerHTML='<style>'+
+    '#camels-live-plots .lp-head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}'+
+    '#camels-live-plots h2{margin:.6rem 0}'+
+    '#camels-live-plots .lp-plot{border:1px solid #ddd;border-radius:6px;padding:.5rem .8rem;margin:.6rem 0 1.2rem}'+
+    '#camels-live-plots .lp-plot-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}'+
+    '#camels-live-plots .lp-title{font-weight:600}'+
+    '#camels-live-plots .lp-badge{font-size:.8rem;padding:.1rem .5rem;border-radius:1rem;color:#fff;background:#757575}'+
+    '#camels-live-plots .lp-badge.running{background:#2e7d32}'+
+    '#camels-live-plots .lp-badge.aborted,#camels-live-plots .lp-badge.failed{background:#c62828}'+
+    '#camels-live-plots .lp-plot-head button{margin-left:auto}'+
+    '#camels-live-plots details.lp-info{margin:.3rem 0;font-size:.9rem}'+
+    '#camels-live-plots details.lp-info summary{cursor:pointer;color:#333}'+
+    '#camels-live-plots .lp-info table{border-collapse:collapse;margin:.3rem 0 .2rem 1rem}'+
+    '#camels-live-plots .lp-info td{padding:.1rem .8rem .1rem 0;vertical-align:top}'+
+    '#camels-live-plots .lp-info td:first-child{font-weight:600;white-space:nowrap}'+
+    '#camels-live-plots .lp-frame{width:100%;height:440px}'+
+    '</style>'+
+    '<div class="lp-head"><h2>Live plots</h2><small id="lp-status" class="hint">Choose a protocol.</small><button type="button" id="lp-close">Close all plot windows in CAMELS</button></div><div id="lp-frames"></div>';
   const anchor=document.getElementById('browser-plots')||document.getElementById('native-live-plots');
   if(anchor)anchor.parentNode.insertBefore(section,anchor);else document.body.append(section);
   const statusText=document.getElementById('lp-status'),frames=document.getElementById('lp-frames'),closeButton=document.getElementById('lp-close');
   const plots=new Map();
-  let source='',loading=false,lastIdleRefresh=0,plotlyPromise=null;
+  const STATES={running:'Protocol running',finished:'Protocol finished',aborted:'Protocol aborted',failed:'Protocol failed'};
+  let source='',plotlyPromise=null,loopToken=0,liveSeq=null,lastStatus={};
+  const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function selectedProtocol(){
     const name=protocolSelect.value;
     return name&&!/^Loading|^No saved|^Could not load/.test(name)?name:'';
@@ -1223,6 +1251,7 @@ DASHBOARD_PAGE += """<script>
     });
     return plotlyPromise;
   }
+  function domId(id){return 'lp-'+String(id).replace(/[^a-zA-Z0-9_-]/g,'_')}
   function reset(){plots.clear();frames.innerHTML=''}
   function cursor(){
     const result={};
@@ -1231,7 +1260,7 @@ DASHBOARD_PAGE += """<script>
   }
   function merge(reply){
     let plot=plots.get(reply.id);
-    if(!plot||reply.reset){plot={x:[],ys:{},fits:[]};plots.set(reply.id,plot)}
+    if(!plot||reply.reset){plot={x:[],ys:{},fits:[],info:plot?plot.info:{}};plots.set(reply.id,plot)}
     const before=plot.x.length;
     plot.x=plot.x.concat(reply.x||[]);
     for(const trace of reply.traces||[]){
@@ -1240,6 +1269,7 @@ DASHBOARD_PAGE += """<script>
     }
     plot.traces=reply.traces||[];
     if(reply.fits)plot.fits=reply.fits;
+    if(reply.info)plot.info=reply.info;
     plot.meta=reply;
     plot.generation=reply.generation;plot.since=reply.end;plot.version=reply.version;
     plot.dirty=true;
@@ -1266,68 +1296,150 @@ DASHBOARD_PAGE += """<script>
     if(hasY2)layout.yaxis2={...axis(meta.y2_label,meta.y2_log,fg),overlaying:'y',side:'right'};
     return {data,layout};
   }
+  function displayTime(value){return value?String(value).slice(0,19).replace('T',' '):''}
+  function runState(plot){
+    const state=plot.info&&plot.info.state;
+    if(state)return state;
+    // CAMELS without run info: use the measurement status.
+    const status=String(lastStatus.status||'').toLowerCase();
+    return ['running','preparing'].some(word=>status.includes(word))?'running':'finished';
+  }
+  function plotBox(id){
+    let box=document.getElementById(domId(id));
+    if(box)return box;
+    box=document.createElement('div');
+    box.id=domId(id);box.className='lp-plot';
+    box.innerHTML='<div class="lp-plot-head"><span class="lp-title"></span><span class="lp-badge"></span><small class="lp-message hint"></small><button type="button" class="lp-close-one">Close</button></div>'+
+      '<details class="lp-info"><summary></summary><table><tbody></tbody></table></details><div class="lp-frame"></div>';
+    const button=box.querySelector('.lp-close-one'),message=box.querySelector('.lp-message');
+    button.addEventListener('click',async()=>{
+      const name=selectedProtocol();
+      if(!name)return;
+      if(button.dataset.confirming!=='true'){
+        button.dataset.confirming='true';button.textContent='Click again to close';
+        setTimeout(()=>{if(button.dataset.confirming==='true'){button.dataset.confirming='';button.textContent='Close'}},4000);
+        return;
+      }
+      button.dataset.confirming='';button.disabled=true;button.textContent='Closing...';
+      try{
+        await api('plots/'+encodeURIComponent(id)+'/close?protocol_name='+encodeURIComponent(name),{method:'POST'});
+        message.textContent='Close requested.';
+      }catch(error){
+        message.textContent='Could not close: '+error.message;
+        button.disabled=false;button.textContent='Close';
+      }
+    });
+    frames.append(box);
+    return box;
+  }
+  function updateHeader(id,plot){
+    const box=plotBox(id),info=plot.info||{},state=runState(plot);
+    box.querySelector('.lp-title').textContent=plot.meta.title||'CAMELS plot';
+    const badge=box.querySelector('.lp-badge');
+    badge.className='lp-badge '+state;
+    badge.textContent=STATES[state]||state;
+    const details=box.querySelector('details.lp-info');
+    const summary=[info.protocol||selectedProtocol(),info.started?'started '+displayTime(info.started):'',STATES[state]||state].filter(Boolean).join(' \u00b7 ');
+    details.querySelector('summary').textContent=summary;
+    const rows=[['Protocol',info.protocol],['Started',displayTime(info.started)],['Ended',displayTime(info.ended)],['State',STATES[state]||state]];
+    const variables=info.variables||{};
+    const names=Object.keys(variables);
+    rows.push(['Parameters',names.length?'':'none']);
+    for(const name of names){
+      const value=variables[name];
+      rows.push(['\u00a0\u00a0'+name,typeof value==='object'&&value!==null?JSON.stringify(value):String(value)]);
+    }
+    const body=details.querySelector('tbody');
+    body.textContent='';
+    for(const [label,value] of rows){
+      if(value===undefined||value===null||(value===''&&label!=='Parameters'))continue;
+      const row=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td');
+      a.textContent=label;b.textContent=value;row.append(a,b);body.append(row);
+    }
+  }
   async function render(){
+    for(const [id,plot] of plots)updateHeader(id,plot);
     const dirty=[...plots.entries()].filter(([,plot])=>plot.dirty);
     if(!dirty.length)return;
     const Plotly=await ensurePlotly();
     for(const [id,plot] of dirty){
-      const frameId='lp-'+id.replace(/[^a-zA-Z0-9_-]/g,'_');
-      let frame=document.getElementById(frameId);
-      if(!frame){frame=document.createElement('div');frame.id=frameId;frame.className='lp-frame';frames.append(frame)}
+      const frame=plotBox(id).querySelector('.lp-frame');
       const {data,layout}=figure(plot);
       Plotly.react(frame,data,layout,{responsive:true,displaylogo:false});
       plot.dirty=false;
     }
   }
-  async function refresh(){
-    const name=selectedProtocol();
-    if(loading)return;
-    if(!name){statusText.textContent='Choose a protocol.';closeButton.disabled=true;reset();return}
-    // Poll every second while measuring, otherwise every five seconds.
-    const now=Date.now();
-    if(window.camelsMeasurementRunning!==true&&source===name&&now-lastIdleRefresh<5000)return;
-    lastIdleRefresh=now;
-    if(source!==name){reset();source=name}
-    loading=true;
-    try{
-      for(let round=0;round<20;round++){
-        const reply=await api('plot-caches?protocol_name='+encodeURIComponent(name)+'&cursor='+encodeURIComponent(JSON.stringify(cursor())));
-        if(source!==name)return;
-        const open=new Set((reply.plots||[]).map(plot=>plot.id));
-        for(const id of [...plots.keys()])if(!open.has(id)){
-          plots.delete(id);
-          const frame=document.getElementById('lp-'+id.replace(/[^a-zA-Z0-9_-]/g,'_'));
-          if(frame)frame.remove();
-        }
-        (reply.plots||[]).forEach(merge);
-        const count=Number(reply.open_plot_count||0);
-        statusText.textContent=count?count+' plot window(s) open in CAMELS.':'No plot window open in CAMELS.';
-        closeButton.disabled=count===0;
-        if(!(reply.plots||[]).some(plot=>plot.more))break;
+  function applyPlots(reply){
+    const open=new Set((reply.plots||[]).map(plot=>plot.id));
+    for(const id of [...plots.keys()])if(!open.has(id)){
+      plots.delete(id);
+      const box=document.getElementById(domId(id));
+      if(box)box.remove();
+    }
+    (reply.plots||[]).forEach(merge);
+    const count=Number(reply.open_plot_count||0);
+    statusText.textContent=count?count+' plot window(s) open in CAMELS.':'No plot window open in CAMELS.';
+    closeButton.disabled=count===0;
+  }
+  async function liveLoop(){
+    const token=++loopToken;
+    liveSeq=null;
+    while(token===loopToken){
+      const name=selectedProtocol();
+      if(!name){
+        window.camelsLive=null;
+        statusText.textContent='Choose a protocol.';closeButton.disabled=true;reset();
+        await sleep(1000);continue;
       }
-      await render();
-    }catch(error){
-      statusText.textContent='Could not load the plots: '+error.message;
-    }finally{loading=false}
+      if(source!==name){reset();source=name}
+      let push=false;
+      try{
+        for(let round=0;round<20;round++){
+          let path='live?protocol_name='+encodeURIComponent(name)+'&cursor='+encodeURIComponent(JSON.stringify(cursor()));
+          // Only the first request waits for a change; the rest fetch chunks.
+          if(round===0&&liveSeq!==null)path+='&seq='+liveSeq;
+          const reply=await api(path);
+          if(token!==loopToken)return;
+          push=reply.push===true;
+          if(reply.seq!==null&&reply.seq!==undefined)liveSeq=reply.seq;
+          if(reply.status){
+            lastStatus=reply.status;
+            window.camelsLive={protocol:name,ok:true};
+            document.dispatchEvent(new CustomEvent('camels-live-status',{detail:reply.status}));
+          }
+          applyPlots(reply.plots||{});
+          if(!((reply.plots||{}).plots||[]).some(plot=>plot.more))break;
+        }
+        await render();
+        if(!push)await sleep(window.camelsMeasurementRunning===true?1000:3000);
+      }catch(error){
+        if(token!==loopToken)return;
+        window.camelsLive=null;
+        statusText.textContent='Could not load the plots: '+error.message;
+        await sleep(2000);
+      }
+    }
   }
   closeButton.addEventListener('click',async()=>{
     const name=selectedProtocol();
     if(!name)return;
     if(closeButton.dataset.confirming!=='true'){
-      closeButton.dataset.confirming='true';closeButton.textContent='Click again to close them';
-      setTimeout(()=>{closeButton.dataset.confirming='';closeButton.textContent='Close plot windows in CAMELS'},4000);
+      closeButton.dataset.confirming='true';closeButton.textContent='Click again to close all';
+      setTimeout(()=>{closeButton.dataset.confirming='';closeButton.textContent='Close all plot windows in CAMELS'},4000);
       return;
     }
-    closeButton.dataset.confirming='';closeButton.textContent='Close plot windows in CAMELS';
-    try{await api('plots/close?protocol_name='+encodeURIComponent(name),{method:'POST'});lastIdleRefresh=0;setTimeout(refresh,500)}
+    closeButton.dataset.confirming='';closeButton.textContent='Close all plot windows in CAMELS';
+    try{await api('plots/close?protocol_name='+encodeURIComponent(name),{method:'POST'})}
     catch(error){statusText.textContent='Could not close the plots: '+error.message}
   });
-  protocolSelect.addEventListener('change',()=>{lastIdleRefresh=0;refresh()});
-  document.addEventListener('camels-measurement-state',()=>{lastIdleRefresh=0;refresh()});
-  setInterval(refresh,1000);
-  setTimeout(refresh,600);
+  protocolSelect.addEventListener('change',()=>{window.camelsLive=null;liveLoop()});
+  setTimeout(liveLoop,600);
 })();
 </script>"""
+
+
+# Longest wait of one /dashboard/live request for a change in CAMELS.
+LIVE_WAIT_SECONDS = 15.0
 
 
 def create_app(
@@ -1899,6 +2011,53 @@ def create_app(
         return request_camels(
             "POST",
             "/api/v1/actions/stop",
+            connection=connection_for_protocol(user.user_id, protocol_name),
+        )
+
+    @app.get("/dashboard/live")
+    def dashboard_live(
+        protocol_name: str,
+        cursor: str | None = None,
+        seq: int | None = None,
+        user=Depends(read_user),
+    ):
+        """Measurement status and new plot points, as soon as they exist.
+
+        With ``seq`` (from the previous reply) and a remote computer that
+        reports changes, the request waits until CAMELS reports a change
+        (at most ``LIVE_WAIT_SECONDS``). Otherwise it answers at once and
+        ``push`` is false, so the browser polls.
+        """
+        connection = connection_for_protocol(user.user_id, protocol_name)
+        device_id = remote.device_id_of(connection[0])
+        push, new_seq = False, None
+        if device_id is not None:
+            try:
+                changes = remote.wait_changes(
+                    device_id, seq, LIVE_WAIT_SECONDS if seq is not None else 0
+                )
+                push, new_seq = bool(changes.get("push")), changes.get("seq")
+            except HTTPException:
+                pass
+        query = "?cursor=" + quote(cursor, safe="") if cursor else ""
+        try:
+            data = request_camels("GET", "/api/v1/gui/live" + query, connection=connection)
+        except HTTPException as exc:
+            # CAMELS versions without /live: two requests.
+            if exc.status_code not in (404, 501):
+                raise
+            data = {
+                "status": request_camels("GET", "/api/v1/gui/measurement-status", connection=connection),
+                "plots": request_camels("GET", "/api/v1/gui/plot-caches" + query, connection=connection),
+            }
+        return {**data, "push": push, "seq": new_seq}
+
+    @app.post("/dashboard/plots/{plot_id}/close")
+    def dashboard_close_plot(plot_id: str, protocol_name: str, user=Depends(write_user)):
+        """Close one plot window in CAMELS."""
+        return request_camels(
+            "POST",
+            f"/api/v1/gui/plots/{quote(plot_id, safe='')}/close",
             connection=connection_for_protocol(user.user_id, protocol_name),
         )
 

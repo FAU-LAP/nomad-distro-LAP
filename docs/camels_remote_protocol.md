@@ -108,9 +108,27 @@ reconnection, including a measurement that continued while the agent was offline
 
 ```json
 {"type": "hello", "camels_version": "1.9.0", "hostname": "lab-pc-01",
- "operations": ["list_protocols", "start_protocol"],
+ "operations": ["list_protocols", "start_protocol"], "features": ["changes", "live_update"],
  "measurement": {"state": "running", "run_id": "0d3f...", "protocol_name": "IV_Sweep"}}
 ```
+
+`features` lists optional behaviour: `changes` means the agent sends `changed`
+(see below). Agents without `features` are polled.
+
+### `changed`
+
+```json
+{"type": "changed"}
+```
+
+Sent by the agent when a plot was opened, closed or changed, or the measurement
+status changed. It carries no data. The agent checks for changes every 0.1 s
+in-process and sends `changed` at most every 0.2 s, so nothing is sent while
+nothing changes. The broker wakes up the waiting `/changes` requests (section 9);
+OASIS then fetches the new data with `get_live_update`.
+
+The connection uses permessage-deflate compression (agent: `compression="deflate"`,
+broker: uvicorn default).
 
 ```json
 {"type": "welcome", "session_id": "...", "plot_subscriptions": []}
@@ -163,10 +181,12 @@ Paths start with `/api/v1`. Payload fields not listed are ignored.
 | `get_plot_count` | | `GET /gui/plots` | |
 | `get_plot_data` | `cursor` (object, optional) | `GET /gui/plot-caches?cursor=` | |
 | `get_pid_plots` | `protocol` | `GET /gui/pid-plots?protocol_name=` | |
+| `get_live_update` | `cursor` (object, optional) | `GET /gui/live?cursor=`: `{"status": ..., "plots": ...}` | |
 | `save_protocol_parameters` | `protocol`, `variables` | `POST /protocols/{protocol}/parameters` | yes |
 | `start_measurement` | `protocol`, `variables`, `run_id` | `POST /actions/run/protocols/{protocol}?protocol_uuid={run_id}` | yes |
 | `stop_measurement` | | `POST /actions/stop` | yes |
 | `close_plots` | | `POST /gui/plots/close` | yes |
+| `close_plot` | `plot_id` (id from the plot data) | `POST /gui/plots/{plot_id}/close` | yes |
 
 Operations that change state are refused with `paused` while remote control is
 paused on the lab computer (**Tools > OASIS Remote Control...**). Reading stays
@@ -229,8 +249,12 @@ state; if the run ended while offline, the agent also sends its final `status`.
 
 CAMELS sends data, not images. Every open 1D plot window keeps a thread-safe
 copy of its points and appearance (`nomad_camels/main_classes/remote_plot_cache.py`).
-The browser polls `get_plot_data` (every second while measuring, otherwise every
-five seconds) with a cursor, and receives only points it does not have yet:
+The browser asks `/dashboard/live` with a cursor and receives the measurement
+status and only the points it does not have yet. For a computer whose agent
+reports changes, the request waits until CAMELS sends `changed` (at most 15 s),
+so new points appear within about 0.1 s. Direct API connections and older agents
+are polled (every second while measuring, otherwise every three seconds).
+The cursor:
 
 ```json
 {"cursor": {"140221": {"generation": "a1b2c3d4-0", "since": 120, "version": 3}}}
@@ -257,6 +281,12 @@ five seconds) with a cursor, and receives only points it does not have yet:
 - `traces` carry the curve styles read from pyqtgraph (color, symbol, line style,
   visibility) as Plotly fields, so OASIS draws the plot like CAMELS. `fits` are
   sent only when `version` changed.
+- `info` describes the run the plot belongs to; it is sent with `fits`:
+  `{"protocol": "IV", "started": "2026-11-19T14:03:22+01:00", "ended": null,
+  "state": "running", "variables": {"n": 3}}`. `state` is `running`, `finished`,
+  `aborted` or `failed`. CAMELS shows the same information in a collapsible box in
+  the top right corner of the plot window; OASIS shows it above each plot, with the
+  state and a button that closes only this plot (`close_plot`).
 - Plot data is for display only. The complete data stays in CAMELS and NOMAD.
 - The Dash browser plots (`/gui/browser-plots/...`) are not available for remote
   computers.
@@ -275,10 +305,13 @@ the NOMAD user for the device.
 | `DELETE /internal/devices/{device_id}` | Delete a device, revoke its token, close its connection with `4401` |
 | `POST /internal/devices/{device_id}/commands` | Send a command and wait for `command_result` |
 | `GET /internal/devices/{device_id}/state` | Online state and latest `status` |
-| `GET /internal/devices/{device_id}/plots?run_id=` | Latest snapshots; also renews the subscription |
+| `GET /internal/devices/{device_id}/changes?after=&timeout=` | Long poll, see below |
 
-The broker ends a subscription 10 seconds after the last plot request, so a closed
-browser tab stops the data flow.
+`/changes` returns `{"seq", "online", "push"}`. `seq` counts the `changed`
+messages of the device (and its connects and disconnects). The request answers at
+once if `seq` differs from `after` (or `after` is missing), otherwise after the
+next change or `timeout` seconds (at most 30). `push` is false when the connected
+agent does not report changes; then the request never waits.
 
 ## 10. Security requirements
 
@@ -293,6 +326,11 @@ browser tab stops the data flow.
 
 Done:
 
+- Changes are pushed (`changed`, `/changes`, `get_live_update`); compression on
+  the connection. The local CAMELS API listens on `127.0.0.1` unless
+  **Allow API access from other computers** is checked in the settings.
+- Run info of each plot in CAMELS and OASIS; closing a single plot from OASIS.
+
 - CAMELS: agent, pairing dialog with pause switch, stop route, `busy` (409) for a
   second start, `run_id` deduplication in the agent, plot data copies with cursor
   and appearance, `websockets` in the `api` dependencies.
@@ -303,9 +341,8 @@ Done:
 
 Open:
 
-- The pushed `status` messages of section 7; OASIS currently polls
-  `get_measurement_status`.
-- Bind the local CAMELS API server to `127.0.0.1` when only remote control is used.
+- The `status` messages of section 7. Instead, `changed` (section 4) wakes up
+  OASIS, which reads the status with `get_live_update`.
 - Remove the Dash iframe code once no direct API connections are used.
 
 ## 12. Decisions
