@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import base64
+import contextvars
 import hashlib
 import json
 from urllib.parse import quote
@@ -22,6 +23,7 @@ from nomad.app.v1.routers.auth import get_current_user
 from nomad.auth.scopes import Scope
 from nomad_camels_oasis.measurement_dashboard import AUTHENTICATION_REQUIRED_PAGE
 from nomad_camels_oasis import remote
+from nomad_camels_oasis.branding import CAMELS_ICON_SVG, CAMELS_LOGO_SVG
 
 
 # This is a presentation limit only. The complete, lossless measurement remains
@@ -1391,7 +1393,8 @@ DASHBOARD_PAGE += """<script>
         statusText.textContent='Choose a protocol.';closeButton.disabled=true;reset();
         await sleep(1000);continue;
       }
-      if(source!==name){reset();source=name}
+      const key=(window.camelsComputer||'')+'|'+name;
+      if(source!==key){reset();source=key}
       let push=false;
       try{
         for(let round=0;round<20;round++){
@@ -1438,6 +1441,269 @@ DASHBOARD_PAGE += """<script>
 </script>"""
 
 
+# CAMELS look: header with the NOMAD CAMELS logo, cards, and buttons and
+# inputs in the CAMELS colors. Applied last, after all page patches above.
+CAMELS_THEME_CSS = """<style id="camels-theme">
+:root{--camels-blue:#2a4cdf;--camels-blue-dark:#1f39b0;--camels-blue-soft:#eef1fd;--camels-gold:#bf8a36;--camels-text:#1c2333;--camels-muted:#5b6475;--camels-border:#dfe3ec;--camels-bg:#f4f6fa;--camels-red:#c62828}
+html{background:var(--camels-bg)}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:15px;color:var(--camels-text);background:var(--camels-bg);margin:0 auto;padding:1.25rem 1.25rem 3rem;max-width:1080px;min-height:0;display:block;line-height:1.5}
+.camels-brand{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;background:#fff;border:1px solid var(--camels-border);border-top:4px solid var(--camels-blue);border-radius:12px;padding:.9rem 1.2rem;margin:0 0 1.1rem;box-shadow:0 1px 3px rgba(16,24,40,.06)}
+.camels-brand .camels-logo{display:flex;flex:none}
+.camels-brand .camels-logo svg{height:42px;width:auto}
+.camels-brand .camels-titles{border-left:1px solid var(--camels-border);padding-left:1.1rem;min-width:0}
+.camels-brand h1{margin:0;font-size:1.3rem;line-height:1.25;font-weight:650}
+.camels-brand p{margin:.15rem 0 0;color:var(--camels-muted);font-size:.9rem}
+.camels-brand nav{margin-left:auto}
+.camels-brand nav a{display:inline-block;text-decoration:none;color:var(--camels-blue);font-weight:600;font-size:.9rem;border:1px solid var(--camels-border);border-radius:999px;padding:.35rem .9rem;background:#fff}
+.camels-brand nav a:hover{background:var(--camels-blue-soft);border-color:var(--camels-blue)}
+.camels-card,#remote-devices,details#api-connection{display:block;background:#fff;border:1px solid var(--camels-border);border-radius:12px;padding:1rem 1.25rem;margin:0 0 1.1rem;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+h2{font-size:1.1rem;font-weight:650;margin:1.2rem 0 .6rem;padding-left:.6rem;border-left:4px solid var(--camels-gold);line-height:1.3}
+.camels-card>h2:first-child,#remote-devices>h2:first-of-type,.camels-card .lp-head h2{margin-top:.2rem}
+details>summary{cursor:pointer;font-weight:600;color:var(--camels-text)}
+details#api-connection>summary,details.camels-more>summary{color:var(--camels-muted)}
+details.camels-more[open]>summary{margin-bottom:.6rem}
+a{color:var(--camels-blue)}
+.hint{color:var(--camels-muted)}
+label{color:var(--camels-text)}
+input,select,textarea{font:inherit;font-size:.95rem;color:var(--camels-text);background:#fff;border:1px solid #c9cfdc;border-radius:8px;padding:.5rem .65rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--camels-blue);box-shadow:0 0 0 3px rgba(42,76,223,.15)}
+input[type=checkbox]{width:auto;padding:0;accent-color:var(--camels-blue)}
+button{font:inherit;font-size:.9rem;font-weight:600;line-height:1.2;color:#fff;background:var(--camels-blue);border:1px solid var(--camels-blue);border-radius:8px;padding:.5rem .95rem;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+button:hover:not(:disabled){background:var(--camels-blue-dark);border-color:var(--camels-blue-dark)}
+button:disabled{color:#9aa1ae;background:#eceef3;border-color:#eceef3;cursor:not-allowed}
+table button,.lp-close-one,#lp-close,#dashboard-save-parameters,#remote-address-reset,#close-camels-plots,details#api-connection button,.camels-more button{color:var(--camels-blue);background:#fff;border-color:#c9cfdc;padding:.35rem .75rem}
+table button:hover:not(:disabled),.lp-close-one:hover:not(:disabled),#lp-close:hover:not(:disabled),#dashboard-save-parameters:hover:not(:disabled),#remote-address-reset:hover:not(:disabled),details#api-connection button:hover:not(:disabled),.camels-more button:hover:not(:disabled){background:var(--camels-blue-soft);border-color:var(--camels-blue);color:var(--camels-blue)}
+#dashboard-stop-measurement:not(:disabled){background:var(--camels-red);border-color:var(--camels-red)}
+#dashboard-stop-measurement:hover:not(:disabled){background:#a31f1f;border-color:#a31f1f}
+table{width:100%;border-collapse:collapse}
+th{font-size:.78rem;font-weight:650;text-transform:uppercase;letter-spacing:.04em;color:var(--camels-muted);text-align:left;border-bottom:1px solid var(--camels-border);padding:.5rem}
+td{border-bottom:1px solid #eef0f5;padding:.5rem;vertical-align:middle}
+pre{background:#f6f7fb;border:1px solid var(--camels-border);border-radius:8px;padding:.8rem 1rem;font-size:.85rem}
+code{background:#f0f2f8;border-radius:4px;padding:0 .25rem}
+#camels-measurement-progress{border-left-color:var(--camels-border)!important}
+#camels-measurement-progress-bar{background:linear-gradient(90deg,var(--camels-blue),#4e6cf0)!important}
+#camels-live-plots .lp-plot{border-color:var(--camels-border);border-radius:10px;background:#fff}
+#camels-live-plots .lp-badge{font-weight:600;letter-spacing:.01em}
+#camels-live-plots .lp-badge.running{background:#2e7d32}
+#camels-live-plots .lp-badge.finished{background:#6b7280}
+#camels-live-plots .lp-info table{width:auto}
+#camels-live-plots .lp-info td{border:none;padding:.1rem .9rem .1rem 0}
+#camels-live-plots details.lp-info summary{color:var(--camels-muted);font-weight:500}
+#parameters label{font-weight:600}
+#parameters input{margin-top:.25rem}
+@media (max-width:640px){.camels-brand .camels-titles{border-left:none;padding-left:0}.camels-brand nav{margin-left:0}}
+</style>"""
+
+
+def camels_header(title: str, subtitle: str, link: str, link_text: str, dashboard_id: str) -> str:
+    return (
+        '<header class="camels-brand"><span class="camels-logo">' + CAMELS_LOGO_SVG + "</span>"
+        '<div class="camels-titles"><h1>' + title + "</h1><p>" + subtitle + "</p></div>"
+        '<nav><a href="' + link + '" data-dashboard="' + dashboard_id + '">' + link_text + "</a></nav></header>"
+        + CAMELS_NAV_SCRIPT
+    )
+
+
+# Inside the NOMAD GUI the page is an iframe of the dashboard viewer. A link
+# to the other CAMELS page changes the GUI route instead, so that the NOMAD
+# header shows the right dashboard. The iframe sandbox does not allow
+# navigating the top window, but it is the same origin: change its history
+# and let its router follow (popstate). Opened on its own, the link works
+# as usual.
+CAMELS_NAV_SCRIPT = """<script>
+document.addEventListener('click',event=>{
+  const link=event.target.closest&&event.target.closest('a[data-dashboard]');
+  if(!link)return;
+  try{
+    const top=window.top;
+    if(top===window)return;
+    const path=top.location.pathname,marker='/dashboard/',at=path.lastIndexOf(marker);
+    if(at<0)return;
+    event.preventDefault();
+    top.history.pushState(top.history.state,'',path.slice(0,at+marker.length)+link.dataset.dashboard);
+    top.dispatchEvent(new PopStateEvent('popstate',{state:top.history.state}));
+  }catch(error){}
+});
+</script>"""
+
+
+SETUP_PAGE = (
+    SETUP_PAGE.replace("<title>CAMELS connections setup</title>", "<title>CAMELS setup</title>", 1)
+    .replace("</head>", CAMELS_THEME_CSS + "</head>", 1)
+    .replace(
+        "<h1>CAMELS connections setup</h1>",
+        camels_header(
+            "CAMELS setup",
+            "Pair lab computers running CAMELS with OASIS and manage their connections.",
+            "./dashboard",
+            "Measurements &rarr;",
+            "camels-measurement-dashboard",
+        ),
+        1,
+    )
+)
+DASHBOARD_PAGE = (
+    DASHBOARD_PAGE.replace("<title>CAMELS measurement dashboard</title>", "<title>CAMELS measurements</title>", 1)
+    .replace("</head>", CAMELS_THEME_CSS + "</head>", 1)
+    .replace(
+        "<h1>CAMELS measurement dashboard</h1>",
+        camels_header(
+            "CAMELS measurements",
+            "Start and stop measurements, edit parameters and watch the live plots.",
+            "./setup",
+            "Setup &rarr;",
+            "camels-measurements",
+        ),
+        1,
+    )
+)
+
+# Group the dashboard into cards: measurement control, live plots, and the
+# Dash browser plots (only for direct API connections) folded away.
+DASHBOARD_PAGE += """<script>
+(() => {
+  const header=document.querySelector('.camels-brand');
+  if(!header||document.getElementById('camels-control-card'))return;
+  const ends=new Set(['camels-plot-window-status','pid-controller-plots','camels-live-plots','browser-plots']);
+  const card=document.createElement('section');
+  card.id='camels-control-card';card.className='camels-card';
+  const nodes=[];
+  for(let node=header.nextSibling;node&&!(node.id&&ends.has(node.id));node=node.nextSibling){
+    if(node.nodeName!=='SCRIPT')nodes.push(node);
+  }
+  header.after(card);
+  for(const node of nodes)card.append(node);
+  // Replaced by the Live plots section, which lists and closes plots.
+  const windows=document.getElementById('camels-plot-window-status');
+  if(windows)windows.style.display='none';
+  for(const id of ['pid-controller-plots','camels-live-plots']){
+    const section=document.getElementById(id);
+    if(section)section.classList.add('camels-card');
+  }
+  const live=document.getElementById('camels-live-plots');
+  if(live)card.after(live);
+  // PID controller plots: own card, shown only while there are some.
+  const pidSection=document.getElementById('pid-controller-plots');
+  const pidFrames=document.getElementById('pid-plot-frames');
+  if(pidSection&&pidFrames){
+    pidSection.append(pidFrames);
+    const pidHeading=pidSection.querySelector('h2');
+    if(pidHeading)pidHeading.style.display='';
+    const showPid=()=>{pidSection.style.display=pidFrames.children.length?'':'none'};
+    new MutationObserver(showPid).observe(pidFrames,{childList:true});
+    showPid();
+    (live||card).after(pidSection);
+  }
+  const browser=document.getElementById('browser-plots');
+  if(browser){
+    const more=document.createElement('details');
+    more.className='camels-card camels-more';
+    const summary=document.createElement('summary');
+    summary.textContent='Browser plots (Dash) - only for direct API connections';
+    browser.before(more);
+    more.append(summary,browser);
+  }
+})();
+</script>"""
+
+# Computer selector: the protocols listed and every request of the dashboard
+# belong to the chosen computer (``connection_id`` on each request).
+DASHBOARD_PAGE += """<script>
+(() => {
+  const protocolSelect=document.getElementById('protocol');
+  const protocolLabel=protocolSelect&&protocolSelect.closest('label');
+  if(!protocolLabel||document.getElementById('computer'))return;
+  const label=document.createElement('label');
+  label.innerHTML='<strong>Computer</strong><br>';
+  const select=document.createElement('select');
+  select.id='computer';
+  select.innerHTML='<option>Loading computers...</option>';
+  select.style.minWidth='220px';
+  label.append(select);
+  protocolLabel.before(label);
+  const message=document.createElement('small');
+  message.className='hint';
+  message.id='computer-message';
+  const STORE='camels.dashboard.computer';
+  // Every dashboard request carries the chosen computer.
+  const baseApi=api;
+  api=function(path,options){
+    const id=window.camelsComputer;
+    if(id&&!String(path).startsWith('computers')){
+      path+=(String(path).includes('?')?'&':'?')+'connection_id='+encodeURIComponent(id);
+    }
+    return baseApi(path,options);
+  };
+  function remember(id){try{localStorage.setItem(STORE,id)}catch(error){}}
+  function remembered(){try{return localStorage.getItem(STORE)}catch(error){return null}}
+  async function choose(id){
+    window.camelsComputer=id||null;
+    if(id)remember(id);
+    await loadProtocols();
+    protocolSelect.dispatchEvent(new Event('change'));
+  }
+  async function loadComputers(){
+    let computers=[];
+    try{computers=(await api('computers')).computers||[]}
+    catch(error){select.innerHTML='<option>Could not load computers</option>';return}
+    const previous=window.camelsComputer||remembered();
+    select.textContent='';
+    for(const computer of computers){
+      const option=document.createElement('option');
+      option.value=computer.connection_id;
+      option.textContent=computer.name+(computer.kind==='api'?' (API)':'')+(computer.online?'':' - offline');
+      select.append(option);
+    }
+    if(!computers.length){
+      select.innerHTML='<option value="">No computer - open Setup</option>';
+      return;
+    }
+    const known=computers.find(computer=>computer.connection_id===previous);
+    const firstOnline=computers.find(computer=>computer.online);
+    const chosen=(known||firstOnline||computers[0]).connection_id;
+    select.value=chosen;
+    if(chosen!==window.camelsComputer)await choose(chosen);
+  }
+  select.addEventListener('change',()=>choose(select.value));
+  loadComputers();
+  // Computers come online or go offline: refresh the list now and then.
+  setInterval(()=>{if(document.visibilityState==='visible'&&document.activeElement!==select)loadComputers()},15000);
+})();
+</script>"""
+
+
+# The computer chosen in the dashboard, from the ``connection_id`` query
+# parameter of the current request (see ``SelectedComputerMiddleware``).
+SELECTED_CONNECTION: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "camels_selected_connection", default=None
+)
+
+
+class SelectedComputerMiddleware:
+    """Make ``?connection_id=`` available to ``connection_for_protocol``.
+
+    The dashboard adds the chosen computer to every request; then a protocol
+    is looked up on that computer only, also when another computer has a
+    protocol with the same name.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        value = None
+        if scope.get("type") == "http":
+            from urllib.parse import parse_qs
+
+            values = parse_qs(scope.get("query_string", b"").decode("latin-1")).get("connection_id")
+            value = values[-1] if values else None
+        token = SELECTED_CONNECTION.set(value or None)
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            SELECTED_CONNECTION.reset(token)
+
+
 # Longest wait of one /dashboard/live request for a change in CAMELS.
 LIVE_WAIT_SECONDS = 15.0
 
@@ -1455,6 +1721,7 @@ def create_app(
         version="1.1.0",
         description="Authenticated proxy from NOMAD Oasis to CAMELS.",
     )
+    app.add_middleware(SelectedComputerMiddleware)
 
     @app.exception_handler(HTTPException)
     async def camels_page_authentication_error(request: Request, exc: HTTPException):
@@ -1661,7 +1928,79 @@ def create_app(
                     connection_ids[discovered_name] = connection_id
         return names, connection_ids
 
+    def protocols_of(user_id: str, connection_id: str) -> list[str]:
+        """Protocols exposed by one computer of the user ([] if offline)."""
+        if connection_id.startswith(remote.CONNECTION_PREFIX):
+            device_id = connection_id[len(remote.CONNECTION_PREFIX):]
+            for entry in remote.device_catalog(user_id):
+                if entry["device_id"] == device_id:
+                    return entry["protocols"]
+            raise HTTPException(404, "Remote computer not found.")
+        connections, _ = saved_connections(user_id)
+        value = connections.get(connection_id)
+        if value is None:
+            raise HTTPException(404, "CAMELS connection not found.")
+        if value.get("protocol_name"):
+            return [value["protocol_name"]]
+        try:
+            response = request_camels(
+                "GET",
+                "/api/v1/protocols",
+                connection=(value.get("camels_base_url", default_url).rstrip("/"), value["api_key"]),
+            )
+        except HTTPException:
+            return []
+        return [name for name in response.get("Protocols", []) if isinstance(name, str)]
+
+    def computer_catalog(user_id: str) -> list[dict[str, Any]]:
+        """Remote computers first, then direct API connections."""
+        computers = [
+            {
+                "connection_id": remote.CONNECTION_PREFIX + entry["device_id"],
+                "name": entry["name"],
+                "kind": "remote",
+                "online": entry["online"],
+                "protocols": entry["protocols"],
+            }
+            for entry in remote.device_catalog(user_id)
+        ]
+        connections, _ = saved_connections(user_id)
+        for connection_id, value in connections.items():
+            protocols = protocols_of(user_id, connection_id)
+            computers.append(
+                {
+                    "connection_id": connection_id,
+                    "name": value.get("name") or value.get("camels_base_url", ""),
+                    "kind": "api",
+                    "online": bool(protocols),
+                    "protocols": protocols,
+                }
+            )
+        return computers
+
+    def selected_connection_id(user_id: str, protocol_name: str) -> str:
+        """Id of the computer used for ``protocol_name`` in this request."""
+        selected = SELECTED_CONNECTION.get()
+        if selected:
+            if protocol_name not in protocols_of(user_id, selected):
+                raise HTTPException(
+                    status_code=404,
+                    detail="This protocol is not available on the selected computer.",
+                )
+            return selected
+        _, connection_ids = protocol_catalog(user_id)
+        connection_id = connection_ids.get(protocol_name)
+        if not connection_id:
+            raise HTTPException(
+                status_code=404,
+                detail="This protocol is not available on a connected CAMELS computer.",
+            )
+        return connection_id
+
     def connection_for_protocol(user_id: str, protocol_name: str) -> tuple[str, str]:
+        selected = SELECTED_CONNECTION.get()
+        if selected:
+            return current_connection(user_id, selected_connection_id(user_id, protocol_name))
         _, connection_ids = protocol_catalog(user_id)
         connection_id = connection_ids.get(protocol_name)
         if not connection_id:
@@ -1876,9 +2215,19 @@ def create_app(
     def dashboard_connections(user=Depends(read_user)):
         return connection_summary(user.user_id)
 
+    @app.get("/dashboard/computers")
+    def dashboard_computers(user=Depends(read_user)):
+        """The user's CAMELS computers and their exposed protocols."""
+        return {"computers": computer_catalog(user.user_id)}
+
     @app.get("/dashboard/protocols")
     def dashboard_protocols(connection_id: str | None = None, user=Depends(read_user)):
-        protocol_names, connection_ids = protocol_catalog(user.user_id)
+        if connection_id:
+            # Only the protocols of the chosen computer.
+            protocol_names = protocols_of(user.user_id, connection_id)
+            connection_ids = {name: connection_id for name in protocol_names}
+        else:
+            protocol_names, connection_ids = protocol_catalog(user.user_id)
         connections, _ = saved_connections(user.user_id)
         return {
             "Protocols": protocol_names,
@@ -1940,7 +2289,8 @@ def create_app(
 
         # Check the protocol/key mapping before scheduling the asynchronous
         # workflow, so invalid dashboard requests fail immediately.
-        connection = connection_for_protocol(user.user_id, request.protocol_name)
+        connection_id = selected_connection_id(user.user_id, request.protocol_name)
+        connection = current_connection(user.user_id, connection_id)
         # Give the reason at once instead of a failed Action.
         try:
             state = request_camels("GET", "/api/v1/gui/measurement-status", connection=connection)
@@ -1960,6 +2310,7 @@ def create_app(
                 protocol_name=request.protocol_name,
                 variables=request.variables,
                 run_id=run_id,
+                connection_id=connection_id,
             ),
         )
         return {"workflow_id": workflow_id, "status": "PENDING", "run_id": run_id}
@@ -2013,6 +2364,16 @@ def create_app(
             "/api/v1/actions/stop",
             connection=connection_for_protocol(user.user_id, protocol_name),
         )
+
+    @app.get("/branding/camels-icon.svg", include_in_schema=False)
+    def camels_icon() -> Response:
+        return Response(CAMELS_ICON_SVG, media_type="image/svg+xml",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+    @app.get("/branding/camels-logo.svg", include_in_schema=False)
+    def camels_logo() -> Response:
+        return Response(CAMELS_LOGO_SVG, media_type="image/svg+xml",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/dashboard/live")
     def dashboard_live(

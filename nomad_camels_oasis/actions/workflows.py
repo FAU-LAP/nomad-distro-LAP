@@ -32,6 +32,7 @@ class CAMELSMeasurementWorkflow:
                     "user_id": data.user_id,
                     "protocol_name": data.protocol_name,
                     "run_id": str(run_id),
+                    "connection_id": data.connection_id or "",
                 },
                 start_to_close_timeout=timedelta(seconds=30),
                 retry_policy=retry,

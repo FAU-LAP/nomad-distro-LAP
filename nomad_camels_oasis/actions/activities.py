@@ -13,7 +13,19 @@ from nomad_camels_oasis.app import CredentialStore
 from nomad_camels_oasis.actions.models import CAMELSMeasurementInput
 
 
-def _connection_for_protocol(user_id: str, protocol_name: str) -> tuple[str, str]:
+def _remote_device(user_id: str, protocol_name: str, connection_id: str | None) -> str | None:
+    """The remote computer to use, or None for a direct API connection."""
+    if connection_id and connection_id.startswith(remote.CONNECTION_PREFIX):
+        device_id = connection_id[len(remote.CONNECTION_PREFIX):]
+        # Checks that the computer belongs to the user.
+        remote.owned_device(user_id, device_id)
+        return device_id
+    if connection_id:
+        return None
+    return remote.device_for_protocol(user_id, protocol_name)
+
+
+def _connection_for_protocol(user_id: str, protocol_name: str, connection_id: str | None = None) -> tuple[str, str]:
     """Read one user's key and verify that CAMELS exposes this protocol."""
     path = os.environ.get(
         "CAMELS_SETTINGS_PATH", "/app/.volumes/fs/camels-bridge/settings.json"
@@ -22,6 +34,9 @@ def _connection_for_protocol(user_id: str, protocol_name: str) -> tuple[str, str
     saved = CredentialStore(path, secret).load()
     users = saved.get("users", {})
     connections = users.get(user_id, {}).get("connections", {}) if isinstance(users, dict) else {}
+    if connection_id:
+        # Only the computer chosen in the dashboard.
+        connections = {connection_id: connections[connection_id]} if connection_id in connections else {}
     global_connections: list[dict[str, str]] = []
     for connection in connections.values():
         if connection.get("protocol_name") == protocol_name:
@@ -49,14 +64,14 @@ def _connection_for_protocol(user_id: str, protocol_name: str) -> tuple[str, str
 
 @activity.defn
 def start_camels_run(data: CAMELSMeasurementInput) -> dict[str, Any]:
-    device_id = remote.device_for_protocol(data.user_id, data.protocol_name)
+    device_id = _remote_device(data.user_id, data.protocol_name, data.connection_id)
     if device_id is not None:
         # Remote computer: the fixed run_id makes a retried start harmless.
         payload = {"protocol": data.protocol_name, "variables": data.variables}
         if data.run_id:
             payload["run_id"] = data.run_id
         return remote.command(device_id, "start_measurement", payload, requested_by=data.user_id)
-    base_url, api_key = _connection_for_protocol(data.user_id, data.protocol_name)
+    base_url, api_key = _connection_for_protocol(data.user_id, data.protocol_name, data.connection_id)
     params = {"protocol_uuid": data.run_id} if data.run_id else None
     response = requests.post(
         f"{base_url}/api/v1/actions/run/protocols/{data.protocol_name}",
@@ -71,12 +86,13 @@ def start_camels_run(data: CAMELSMeasurementInput) -> dict[str, Any]:
 
 @activity.defn
 def get_camels_run_status(data: dict[str, str]) -> dict[str, Any]:
-    device_id = remote.device_for_protocol(data["user_id"], data["protocol_name"])
+    connection_id = data.get("connection_id") or None
+    device_id = _remote_device(data["user_id"], data["protocol_name"], connection_id)
     if device_id is not None:
         return remote.command(
             device_id, "get_run_status", {"run_id": data["run_id"]}, requested_by=data["user_id"]
         )
-    base_url, api_key = _connection_for_protocol(data["user_id"], data["protocol_name"])
+    base_url, api_key = _connection_for_protocol(data["user_id"], data["protocol_name"], connection_id)
     response = requests.get(
         f"{base_url}/api/v1/protocols/results/{data['run_id']}",
         headers={"Authorization": f"Bearer {api_key}"},

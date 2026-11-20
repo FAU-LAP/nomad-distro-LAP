@@ -194,8 +194,9 @@ def call(device_id: str, method: str, path: str, payload: dict[str, Any] | None,
     return command(device_id, operation, command_payload, requested_by)
 
 
-def protocol_catalog(user_id: str) -> list[tuple[str, list[str]]]:
-    """``[(device_id, exposed protocol names)]`` of the user's online computers.
+def device_catalog(user_id: str) -> list[dict[str, Any]]:
+    """The user's remote computers: ``device_id``, ``name``, ``online`` and the
+    exposed ``protocols`` (empty when offline).
 
     Cached for a few seconds, because the dashboard asks for every request.
     Broker problems give an empty list, so direct API connections still work.
@@ -205,27 +206,42 @@ def protocol_catalog(user_id: str) -> list[tuple[str, list[str]]]:
         cached = _catalog_cache.get(user_id)
         if cached and now - cached[0] < CATALOG_TTL_SECONDS:
             return cached[1]
-    catalog: list[tuple[str, list[str]]] = []
+    catalog: list[dict[str, Any]] = []
     try:
         devices = broker_request("GET", f"/devices?owner={quote(user_id, safe='')}").get("devices", [])
     except HTTPException:
         devices = []
     for device in devices:
-        if not device.get("online"):
-            continue
-        try:
-            result = command(device["device_id"], "list_protocols", requested_by=user_id, timeout=10)
-        except HTTPException:
-            continue
-        names = [name for name in (result or {}).get("Protocols", []) if isinstance(name, str) and name]
-        catalog.append((device["device_id"], names))
+        entry = {
+            "device_id": device["device_id"],
+            "name": device.get("name") or device["device_id"],
+            "online": bool(device.get("online")),
+            "protocols": [],
+        }
+        if entry["online"]:
+            try:
+                result = command(device["device_id"], "list_protocols", requested_by=user_id, timeout=10)
+                entry["protocols"] = [
+                    name for name in (result or {}).get("Protocols", []) if isinstance(name, str) and name
+                ]
+            except HTTPException:
+                entry["online"] = False
+        catalog.append(entry)
     with _catalog_lock:
         _catalog_cache[user_id] = (now, catalog)
     return catalog
 
 
-def device_for_protocol(user_id: str, protocol_name: str) -> str | None:
-    for device_id, names in protocol_catalog(user_id):
-        if protocol_name in names:
-            return device_id
+def protocol_catalog(user_id: str) -> list[tuple[str, list[str]]]:
+    """``[(device_id, exposed protocol names)]`` of the user's online computers."""
+    return [(entry["device_id"], entry["protocols"]) for entry in device_catalog(user_id) if entry["online"]]
+
+
+def device_for_protocol(user_id: str, protocol_name: str, device_id: str | None = None) -> str | None:
+    """The computer that exposes ``protocol_name``; only ``device_id`` if given."""
+    for entry in device_catalog(user_id):
+        if device_id is not None and entry["device_id"] != device_id:
+            continue
+        if entry["online"] and protocol_name in entry["protocols"]:
+            return entry["device_id"]
     return None

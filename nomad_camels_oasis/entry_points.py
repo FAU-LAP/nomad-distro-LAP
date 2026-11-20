@@ -85,7 +85,26 @@ class CAMELSMeasurementActionEntryPoint(ActionEntryPoint):
         )
 
 
-class CAMELSMeasurementDashboardEntryPoint(DashboardEntryPoint):
+class CAMELSDashboardEntryPoint(DashboardEntryPoint):
+    """Dashboard with the CAMELS icon in NOMAD's dashboard catalogue."""
+
+    def dict_safe(self):
+        """Add the CAMELS icon, served by the CAMELS API of this plugin.
+
+        The ``icon`` field must be an absolute URL, which depends on the
+        address OASIS is reached under. The GUI only puts it into an
+        ``<img src>``, so a path on the same server is set here instead.
+        """
+        from nomad.config import config
+
+        result = super().dict_safe()
+        if not result.get("icon"):
+            base = config.services.api_base_path.rstrip("/")
+            result["icon"] = f"{base}/{camels.prefix}/branding/camels-icon.svg"
+        return result
+
+
+class CAMELSMeasurementDashboardEntryPoint(CAMELSDashboardEntryPoint):
     """Expose the CAMELS control UI in NOMAD's Dashboards page."""
 
     def load(self):
@@ -94,7 +113,7 @@ class CAMELSMeasurementDashboardEntryPoint(DashboardEntryPoint):
         return create_dashboard()
 
 
-class CAMELSMonitorDashboardEntryPoint(DashboardEntryPoint):
+class CAMELSMonitorDashboardEntryPoint(CAMELSDashboardEntryPoint):
     """Expose the CAMELS measurement monitor as a separate dashboard."""
 
     def load(self):
@@ -115,14 +134,14 @@ camels_measurement_action = CAMELSMeasurementActionEntryPoint(
 
 camels_measurement_dashboard = CAMELSMeasurementDashboardEntryPoint(
     id_url_safe="camels-measurements",
-    name="CAMELS connections setup",
-    description="Configure and manage protocol-scoped CAMELS connections.",
+    name="CAMELS setup",
+    description="Pair lab computers running CAMELS with OASIS and manage their connections.",
     launch_modes=["embedded", "tab"],
 )
 
 camels_measurement_monitor_dashboard = CAMELSMonitorDashboardEntryPoint(
     id_url_safe="camels-measurement-dashboard",
-    name="CAMELS measurement dashboard",
-    description="Monitor CAMELS measurement status and live plots.",
+    name="CAMELS measurements",
+    description="Start and stop measurements, edit parameters and watch the live plots.",
     launch_modes=["embedded", "tab"],
 )

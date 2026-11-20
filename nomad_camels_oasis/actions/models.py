@@ -13,3 +13,7 @@ class CAMELSMeasurementInput(BaseModel):
     # Chosen by OASIS before the start, so that a retried start is
     # recognised by CAMELS (remote computers) instead of starting twice.
     run_id: str | None = None
+    # The computer chosen in the dashboard ("remote:<device id>" or the id of
+    # a direct API connection). Without it, the first computer that exposes
+    # the protocol is used.
+    connection_id: str | None = None
