@@ -160,6 +160,25 @@ volumes:
 
 To run the new image you can follow steps 5. and 6. [above](#for-a-new-oasis).
 
+## CAMELS remote control
+
+This distribution contains the local plugin [`nomad_camels_oasis`](nomad_camels_oasis),
+which lets signed-in users control NOMAD CAMELS on lab computers: select the
+protocols that CAMELS exposes for remote control, set their parameters, start and
+stop measurements (as NOMAD Actions), and watch the live plots. It adds:
+
+- the **CAMELS setup** and **CAMELS measurements** dashboards, and the API below
+  `/backend/camels/`,
+- the `camels_broker` service in [`docker-compose.yaml`](docker-compose.yaml). Lab
+  computers open an outbound WebSocket to it through Nginx
+  (`/backend/camels-remote/`), so they need no open port,
+- the `cpu_worker` service, which runs the measurement Actions.
+
+Before the first start, add `CAMELS_BROKER_SECRET` to `.env`. Remote lab computers
+connect only over HTTPS. See [camels_broker/README.md](camels_broker/README.md),
+[docs/camels_local_startup.md](docs/camels_local_startup.md) and the protocol
+description in [docs/camels_remote_protocol.md](docs/camels_remote_protocol.md).
+
 ## Adding a plugin
 
 To add a new plugin to the docker image you should add it to the plugins table in the [`pyproject.toml`](pyproject.toml) file.

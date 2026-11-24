@@ -103,6 +103,28 @@ location @redirect_public_v1_to_index {
     proxy_pass http://nomad-app-backend;
 }
 
+# CAMELS remote control: lab computers connect out to the broker. Only the
+# public broker paths are routed; its /internal API stays unreachable.
+# `^~` keeps the API regex locations below from taking these requests. Old
+# /nomad-oasis/camels-remote/ URLs reach this through the rewrite further down.
+# The broker address is resolved per request (Docker's DNS), so Nginx also
+# starts without the broker and follows a recreated broker container.
+location ^~ /backend/camels-remote/ {
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $camels_broker_upstream http://camels_broker:8000;
+    proxy_pass $camels_broker_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+    proxy_buffering off;
+    client_max_body_size 2m;
+}
+
 # One reserved subtree owns every backend URL. More-specific API regex
 # locations below still win for uploads and downloads.
 location = /backend {

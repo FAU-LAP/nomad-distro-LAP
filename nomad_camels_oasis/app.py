@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from nomad.app.v1.routers.auth import get_current_user
 from nomad.auth.scopes import Scope
-from nomad_camels_oasis.measurement_dashboard import AUTHENTICATION_REQUIRED_PAGE
+from nomad_camels_oasis.measurement_dashboard import API_BASE_PATH, AUTHENTICATION_REQUIRED_PAGE
 from nomad_camels_oasis import remote
 from nomad_camels_oasis.branding import CAMELS_ICON_SVG, CAMELS_LOGO_SVG
 
@@ -118,7 +118,8 @@ class CredentialStore:
         encrypted = self._fernet.encrypt(
             json.dumps(data).encode("utf-8")
         )
-        temporary_path = self._path.with_suffix(".tmp")
+        # One temporary file per process: the app may run several workers.
+        temporary_path = self._path.with_suffix(f".{os.getpid()}.tmp")
         temporary_path.write_bytes(encrypted)
         os.replace(temporary_path, self._path)
 
@@ -244,7 +245,7 @@ SETUP_PAGE = SETUP_PAGE.replace(
 # dashboard in the parent GUI v2 window instead of navigating inside its iframe.
 SETUP_PAGE = SETUP_PAGE.replace(
     '<a href="./dashboard">Go to dashboard</a>',
-    '<a href="/nomad-oasis/gui/v2/dashboard_tools/camels-measurement-dashboard" target="_blank" rel="noopener">Go to dashboard</a>',
+    f'<a href="{API_BASE_PATH}/gui/v2/dashboards/camels-measurement-dashboard" target="_blank" rel="noopener">Go to dashboard</a>',
 )
 
 # Bulk deletion uses the same visible two-click confirmation pattern as each
@@ -1180,6 +1181,8 @@ REMOTE_ADDRESS_TIP = (
     "</span></span>"
 )
 SETUP_PAGE = SETUP_PAGE.replace("__ADDRESS_TIP__", REMOTE_ADDRESS_TIP)
+# The example addresses above use the former base path; show this deployment's.
+SETUP_PAGE = SETUP_PAGE.replace("/nomad-oasis", API_BASE_PATH)
 
 # Remote computers are the main way to connect CAMELS.  Show them first and
 # fold the direct API-key connection, and the protocol control that still uses
@@ -2067,13 +2070,13 @@ def create_app(
         # Fallback for clients without Clear-Site-Data support. The browser
         # frontend removes these paths too, covering cookies written by older
         # GUI versions.
-        for cookie_path in (
-            "/",
-            "/nomad-oasis",
-            "/nomad-oasis/api/v1",
-            "/nomad-oasis/gui",
-            "/nomad-oasis/gui/v2",
-        ):
+        # The current base path, plus the former /nomad-oasis one, whose
+        # cookies may remain in browsers after a change of the deployment.
+        cookie_paths = ["/"]
+        for base in dict.fromkeys((API_BASE_PATH, "/nomad-oasis")):
+            if base:
+                cookie_paths += [base, f"{base}/api/v1", f"{base}/gui", f"{base}/gui/v2"]
+        for cookie_path in cookie_paths:
             response.delete_cookie("Authorization", path=cookie_path)
         return response
 

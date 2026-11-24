@@ -26,6 +26,13 @@ dependencies = ["nomad-lab[parsing, infrastructure]==2.0.1", "setuptools"]
 [project.urls]
 repository = "https://github.com/FAU-LAP/nomad-distro-LAP"
 
+[project.entry-points."nomad.plugin"]
+nomad_camels_oasis = "nomad_camels_oasis.entry_points:camels"
+nomad_camels_measurement_schema = "nomad_camels_oasis.entry_points:camels_measurement_schema"
+nomad_camels_measurement_action = "nomad_camels_oasis.entry_points:camels_measurement_action"
+nomad_camels_measurement_dashboard = "nomad_camels_oasis.entry_points:camels_measurement_dashboard"
+nomad_camels_measurement_monitor_dashboard = "nomad_camels_oasis.entry_points:camels_measurement_monitor_dashboard"
+
 [project.optional-dependencies]
 plugins = [
   "nomad-camels-plugin @ git+https://github.com/FAIRmat-NFDI/nomad-camels-plugin.git@v0.1.9",
@@ -46,4 +53,4 @@ constraint-dependencies = ["hyperspy>=1.7.6"]
 prerelease = "if-necessary-or-explicit"
 
 [tool.setuptools.packages.find]
-exclude = ["gui*", "docs*", "config*"]
+exclude = ["gui*", "docs*", "config*", "camels_broker*"]

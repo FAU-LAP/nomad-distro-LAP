@@ -14,13 +14,15 @@ broker and live plots follow in later phases.
 
 | Path | Reached by | Purpose |
 |---|---|---|
-| `POST /nomad-oasis/camels-remote/pair` | CAMELS, through Nginx | Redeem a pairing code for a device token |
-| `WS /nomad-oasis/camels-remote/agent` | CAMELS, through Nginx | Agent connection |
+| `POST <prefix>/pair` | CAMELS, through Nginx | Redeem a pairing code for a device token |
+| `WS <prefix>/agent` | CAMELS, through Nginx | Agent connection |
 | `/internal/...` | OASIS containers only | Device management and commands; needs `X-Broker-Secret` |
 | `GET /healthz` | Docker network | Liveness |
 
-Nginx must route only `/nomad-oasis/camels-remote/`. The `/internal` API must never
-be routed, and it also requires the broker secret.
+`<prefix>` is `CAMELS_BROKER_PUBLIC_PREFIX`: `/backend/camels-remote` in the OASIS
+stack, `/nomad-oasis/camels-remote` in the stand-alone test below. Nginx must route
+only `<prefix>/`. The `/internal` API must never be routed, and it also requires
+the broker secret.
 
 ## Local test with Docker
 
@@ -81,7 +83,9 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt 
 ## In the OASIS stack
 
 `docker-compose.yaml` contains the `camels_broker` service, and
-`configs/nginx_base_conf` routes `/nomad-oasis/camels-remote/` to it. Each OASIS
+`configs/nginx_base_conf` routes `/backend/camels-remote/` to it. Old
+`/nomad-oasis/camels-remote/` URLs are rewritten to it, so computers paired with
+the former address keep working. Each OASIS
 computer needs:
 
 1. In `.env`:
@@ -99,7 +103,7 @@ computer needs:
    precedence:
 
    ```
-   CAMELS_REMOTE_PUBLIC_URL=https://oasis.example.org/nomad-oasis
+   CAMELS_REMOTE_PUBLIC_URL=https://oasis.example.org/backend
    ```
 
 2. HTTPS, because CAMELS only connects with TLS. Either use

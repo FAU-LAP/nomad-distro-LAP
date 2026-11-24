@@ -168,3 +168,16 @@ cython_debug/
 
 # TLS certificates
 tls/
+
+# CAMELS remote control: local bridge credentials (encrypted API keys) and
+# transient local output.
+.volumes/fs/camels-bridge/settings.json
+.run-logs/
+
+# Local checkout of NOMAD GUI v2, an independent Git repository used only for
+# local experiments. It must not be added to this distribution repository.
+/nomad-gui/
+
+# Local editor settings
+.vscode/
+OASIS_CAMELS_changes.patch

@@ -17,9 +17,11 @@ import subprocess
 
 
 ROOT = Path(__file__).resolve().parent.parent
-IMAGE = "ghcr.io/lao218/nomad_remote_camels:main"
+# Local tags; docker-compose.yaml uses them through APP_IMAGE and
+# NOMAD_CPU_WORKER_IMAGE instead of the published images.
+IMAGE = "nomad-distro-lap:local"
 # The Temporal worker that runs the CAMELS measurement Actions.
-CPU_ACTION_IMAGE = "ghcr.io/lao218/nomad_remote_camels/cpu-action:main"
+CPU_ACTION_IMAGE = "nomad-distro-lap/cpu-action:local"
 
 
 def main() -> None:
@@ -47,6 +49,8 @@ def main() -> None:
 
     print("Starting classic OASIS ...")
     environment = dict(os.environ)
+    environment["APP_IMAGE"] = IMAGE
+    environment["NOMAD_CPU_WORKER_IMAGE"] = CPU_ACTION_IMAGE
     host = detect_host_address()
     if host:
         environment["CAMELS_REMOTE_DETECTED_HOST"] = host
@@ -58,10 +62,10 @@ def main() -> None:
     # it answers 502 for the old address.
     subprocess.run(["docker", "compose", "exec", "-T", "proxy", "nginx", "-s", "reload"], cwd=ROOT, env=environment, check=False)
     print("\nReady:")
-    print("  CAMELS setup: http://localhost/nomad-oasis/camels/setup")
-    print("  GUI v2:       http://localhost/nomad-oasis/gui/v2/")
+    print("  GUI:          http://localhost/")
+    print("  CAMELS setup: http://localhost/backend/camels/setup")
     if host:
-        print(f"  Address for CAMELS (detected): https://{host}/nomad-oasis")
+        print(f"  Address for CAMELS (detected): https://{host}/backend")
 
 
 def detect_host_address() -> str | None:

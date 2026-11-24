@@ -1,45 +1,57 @@
-OASIS -- CAMELS local startup guide
-===================================
+# CAMELS remote control: local startup
+
+How to run this OASIS with the CAMELS remote control plugin
+(`nomad_camels_oasis`) on one Windows computer, for development and tests.
 
 1. Start Docker Desktop and wait until it is running.
 
-2. Start NOMAD CAMELS on this computer.
-   In CAMELS Settings > API:
-   - Enable API
-   - Set API Port to 8000
-   - Generate and copy an API key
+2. Once: create `.env` and `.env.north` with `scripts/generate-env.sh`, then add
+   the broker secret to `.env` (see [camels_broker/README.md](../camels_broker/README.md)):
 
-3. Open the protocol that OASIS should control.
-   In Protocol > General Settings, enable:
-   "Expose this protocol to OASIS remote control".
-   Save the protocol.
+   ```
+   CAMELS_BROKER_SECRET=<output of: openssl rand -hex 32>
+   ```
 
-4. In the OASIS project root, open PowerShell and run:
+3. Start NOMAD CAMELS on this computer. In CAMELS **Settings > API**:
+   - enable the API,
+   - set the API port to `8000`,
+   - generate and copy an API key.
 
+4. Open the protocol that OASIS should control. In **Protocol > General
+   Settings**, enable *Expose this protocol to OASIS remote control* and save the
+   protocol.
+
+5. In the repository root, open PowerShell and run:
+
+   ```powershell
    .\.venv\Scripts\python.exe .\nomad_camels_oasis\start_local_camels_dashboard.py
+   ```
 
-   The script builds the local OASIS image and starts Docker Compose.
+   The script builds the local app and CPU Action worker images, builds the
+   broker, and starts Docker Compose with these images.
 
-5. Open OASIS in a browser and sign in:
+6. Open OASIS in a browser and sign in: <http://localhost/>
 
-   http://localhost/nomad-oasis/gui/v2/
+7. Open the **CAMELS setup** dashboard (or <http://localhost/backend/camels/setup>).
+   - CAMELS on this computer: save a direct API connection with
+     CAMELS API URL `http://host.docker.internal:8000` and the API key from
+     step 3. Select *Test connection*, then *Save connection*.
+   - CAMELS on another computer: add it under *Remote CAMELS computers* and
+     enter the shown address and pairing code in CAMELS under
+     **Tools > OASIS Remote Control...**. This needs HTTPS, see
+     [camels_broker/README.md](../camels_broker/README.md).
 
-6. Open the CAMELS connections setup page. Save a connection with:
+8. Open the **CAMELS measurements** dashboard. Exposed protocols appear in the
+   protocol list. Select a protocol, review the parameters, then start the
+   measurement.
 
-   CAMELS API URL: http://host.docker.internal:8000
-   CAMELS API key: <the key copied from CAMELS Settings > API>
+## Notes
 
-   Select Test connection, then Save connection.
-
-7. Open the CAMELS measurement dashboard. Exposed protocols should appear in
-   the protocol list. Select a protocol, review or save parameters, then use
-   Start measurement.
-
-Notes
------
-- host.docker.internal is correct when OASIS runs in Docker Desktop and CAMELS
+- `host.docker.internal` is correct when OASIS runs in Docker Desktop and CAMELS
   runs on the same Windows computer.
-- A protocol not marked "Expose this protocol to OASIS remote control" will
-  not be visible in OASIS.
+- A protocol without *Expose this protocol to OASIS remote control* is not
+  visible in OASIS.
 - If the connection test fails, first check that CAMELS is still running and
   that its API is enabled on port 8000.
+- URLs below the former base path `/nomad-oasis/` still work: Nginx redirects
+  or rewrites them to `/` (GUI) and `/backend/` (backend, including the broker).

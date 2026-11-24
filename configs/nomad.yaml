@@ -47,6 +47,12 @@ plugins:
       nomad_north_jupyter.north_tools:jupyter:
         north_tool:
           image: ghcr.io/fairmat-nfdi/nomad-north-jupyter:latest
+      nomad_camels_oasis.entry_points:camels:
+        # Default address for a direct CAMELS API connection, reachable from
+        # the NOMAD app container. Connections are managed on the CAMELS setup
+        # page (/backend/camels/setup); remote lab computers use the broker.
+        camels_base_url: "http://host.docker.internal:8000"
+        request_timeout_seconds: 10
       example_uploads/1_basic_examples/1_theory:
         entry_point_type: example_upload
         from_examples_directory: true

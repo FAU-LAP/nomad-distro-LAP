@@ -223,21 +223,22 @@ services:
   #             capabilities: [gpu]
 
   # nomad cpu worker (actions)
-  # cpu_worker:
-  #   <<: *nomad-base
-  #   image: *cpu-worker-image
-  #   container_name: nomad_oasis_cpu_worker
-  #   environment:
-  #     <<: *nomad-environment
-  #     NOMAD_SERVICE: nomad_oasis_cpu_worker
-  #   command: python -m nomad.cli admin run action-cpu-worker
-  #   healthcheck: *worker-healthcheck
-  #   deploy:
-  #     replicas: 1
-  #     resources:
-  #       limits:
-  #         cpus: "2.0" # Maximum 2 CPU cores
-  #         memory: 8G # Maximum 8GB RAM
+  # Required by the CAMELS measurement Action (nomad_camels_oasis).
+  cpu_worker:
+    <<: *nomad-base
+    image: *cpu-worker-image
+    container_name: nomad_oasis_cpu_worker
+    environment:
+      <<: *nomad-environment
+      NOMAD_SERVICE: nomad_oasis_cpu_worker
+    command: python -m nomad.cli admin run action-cpu-worker
+    healthcheck: *worker-healthcheck
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "2.0" # Maximum 2 CPU cores
+          memory: 8G # Maximum 8GB RAM
 
   # nomad app (api + proxy)
   app:
@@ -249,6 +250,10 @@ services:
       NOMAD_SERVICES_API_PORT: 80
       NOMAD_FS_EXTERNAL_WORKING_DIRECTORY: "$PWD"
       NOMAD_NORTH_HUB_HOST: north
+      # Network address of the Docker host, detected by
+      # nomad_camels_oasis/start_local_camels_dashboard.py. Proposed on the
+      # CAMELS setup page as the address to enter in CAMELS.
+      CAMELS_REMOTE_DETECTED_HOST: ${CAMELS_REMOTE_DETECTED_HOST:-}
     command: python -m nomad.cli admin run app --with-gui --gunicorn --host 0.0.0.0 --workers 2
     healthcheck:
       test:
@@ -297,6 +302,21 @@ services:
       app:
         condition: service_healthy
 
+  # Broker for CAMELS remote control. CAMELS on lab computers opens an outbound
+  # WebSocket to it through the proxy (/backend/camels-remote/), so the lab
+  # computers need no open port. The app reaches its internal API directly.
+  # Needs CAMELS_BROKER_SECRET in .env; see camels_broker/README.md.
+  camels_broker:
+    restart: unless-stopped
+    build: ./camels_broker
+    image: camels-broker:local
+    container_name: nomad_oasis_camels_broker
+    environment:
+      CAMELS_BROKER_SECRET: ${CAMELS_BROKER_SECRET:-}
+      CAMELS_BROKER_PUBLIC_PREFIX: /backend/camels-remote
+    volumes:
+      - camels_broker:/data
+
   # one-off job for pulling the jupyterlab image
   jupyterlab_image:
     image: *jupyter-image
@@ -330,6 +350,8 @@ services:
         condition: service_started # TODO: service_healthy
       north:
         condition: service_healthy
+      camels_broker:
+        condition: service_started
     ports:
       - 80:80
       - 443:443
@@ -345,6 +367,8 @@ volumes:
     name: "nomad_oasis_postgresql"
   nomad_north:
     name: "nomad_oasis_north"
+  camels_broker:
+    name: "nomad_oasis_camels_broker"
 
 
 networks:
